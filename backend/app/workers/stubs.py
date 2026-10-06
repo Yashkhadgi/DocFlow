@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
+
+from app.config import settings
 
 
 @dataclass
@@ -27,8 +30,21 @@ class StubExtractionResult:
     raw_model_output: str | None = None
 
 
-def stub_extract(file_bytes: bytes, mime_type: str) -> StubExtractionResult:
-    low_confidence = len(file_bytes) % 3 == 0
+def stub_extract(
+    file_bytes: bytes,
+    mime_type: str,
+    filename: str | None = None,
+    attempt: int | None = None,
+) -> StubExtractionResult:
+    failure_marker = settings.force_fail_filename_contains
+    if failure_marker and filename and failure_marker in filename:
+        failure_limit = settings.force_fail_until_attempt
+        if failure_limit <= 0 or attempt is None or attempt <= failure_limit:
+            raise RuntimeError(f"Stub extraction forced to fail for {filename}")
+
+    digest = int(sha256(file_bytes).hexdigest(), 16)
+    low_confidence = digest % 3 == 0
+    total_mismatch = digest % 5 == 0
     gstin_confidence = 0.62 if low_confidence else 0.92
     return StubExtractionResult(
         document_type="invoice",
@@ -40,7 +56,7 @@ def stub_extract(file_bytes: bytes, mime_type: str) -> StubExtractionResult:
             "currency": StubField("INR", 0.90),
             "subtotal": StubField("10000.00", 0.96),
             "tax": StubField("1800.00", 0.94),
-            "total": StubField("11800.00", 0.97),
+            "total": StubField("12000.00" if total_mismatch else "11800.00", 0.97),
         },
         line_items=[
             StubLineItem("Steel rods", "10", "1000.00", "10000.00", 0.95),

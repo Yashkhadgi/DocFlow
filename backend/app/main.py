@@ -1,12 +1,23 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.config import settings
+from app.config import log_missing_env_vars, settings
+from app.routers import auth, documents, export
 
 
-app = FastAPI(title="DocFlow API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    log_missing_env_vars()
+    yield
+
+
+app = FastAPI(title="DocFlow API", version="0.1.0", lifespan=lifespan)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,25 +27,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(documents.router, prefix="/api/v1")
+app.include_router(export.router, prefix="/api/v1")
 
-@app.exception_handler(HTTPException)
-async def http_error_handler(_request: Request, exc: HTTPException) -> JSONResponse:
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(_request: Request, exc: StarletteHTTPException) -> JSONResponse:
     code_by_status = {
+        400: "validation_error",
         401: "unauthorized",
+        403: "unauthorized",
         404: "not_found",
         409: "conflict",
         413: "file_too_large",
         415: "unsupported_type",
         422: "validation_error",
+        500: "internal_error",
     }
+    if isinstance(exc.detail, dict) and "code" in exc.detail:
+        code = exc.detail["code"]
+        message = exc.detail.get("message", "")
+    else:
+        code = code_by_status.get(
+            exc.status_code,
+            "validation_error" if exc.status_code < 500 else "internal_error",
+        )
+        message = str(exc.detail) if exc.detail is not None else ""
+
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": {
-                "code": code_by_status.get(exc.status_code, "validation_error"),
-                "message": str(exc.detail),
-            }
-        },
+        content={"error": {"code": code, "message": message}},
     )
 
 
@@ -57,3 +80,14 @@ async def internal_error_handler(_request: Request, _exc: Exception) -> JSONResp
 @app.get("/api/v1/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/health")
+def root_health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.port)
