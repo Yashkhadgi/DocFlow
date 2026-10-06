@@ -1,0 +1,10 @@
+/contracts/                      @lead
+/backend/app/extraction/         @person-b
+/samples/                        @person-b
+/backend/                        @person-a
+/frontend/                       @person-c
+/docs/                           @person-c
+/.github/                        @lead
+/docker-compose.yml              @lead
+/.env.example                    @lead
+/V2_IDEAS.md                     @lead
