@@ -165,7 +165,7 @@ def _persist_result(
                 value=_get(field, "value"),
                 confidence=Decimal(str(_get(field, "confidence", 0))),
                 needs_review=field_name in low_confidence_fields,
-                bbox=_get(field, "bbox"),
+                bbox=_json_value(_get(field, "bbox")),
             )
         )
 
@@ -248,6 +248,20 @@ def _get(value: Any, name: str, default: Any = None) -> Any:
     if isinstance(value, dict):
         return value.get(name, default)
     return getattr(value, name, default)
+
+
+def _json_value(value: Any) -> Any:
+    """Convert Pydantic models and nested values into JSONB-compatible data."""
+    if value is None or isinstance(value, (str, int, float, bool, list, dict)):
+        if isinstance(value, list):
+            return [_json_value(item) for item in value]
+        if isinstance(value, dict):
+            return {key: _json_value(item) for key, item in value.items()}
+        return value
+    model_dump = getattr(value, "model_dump", None)
+    if callable(model_dump):
+        return _json_value(model_dump())
+    return value
 
 
 def _decimal_or_none(value: Any) -> Decimal | None:

@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from app.auth.security import hash_password
+from app.extraction.types import ExtractionResult, FieldValue
 from app.models import Document, ExtractedField, Job, LineItem, User, ValidationIssue
 from app.workers import tasks as task_module
 from app.workers.celery_app import celery_app
@@ -122,6 +123,31 @@ def test_worker_clean_path_auto_approves(client, db, monkeypatch) -> None:
     assert document.auto_approved is True
     assert document.approved_at is not None
     assert db.query(Job).filter(Job.document_id == document.id).one().status == "succeeded"
+
+
+def test_worker_serializes_pydantic_bboxes_for_jsonb(client, db, monkeypatch) -> None:
+    _user, document = create_document(db)
+    result = ExtractionResult(
+        fields={
+            "vendor_name": FieldValue(
+                value="Acme Traders",
+                confidence=0.95,
+                bbox={"page": 1, "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.1},
+            )
+        }
+    )
+    monkeypatch.setattr(task_module, "_load_extraction_functions", lambda: (
+        lambda data, mime, filename=None: result,
+        lambda result: [],
+        lambda result, issues, threshold=None: False,
+        lambda result, threshold=None: [],
+        lambda result, existing: None,
+    ))
+
+    run_task(db, monkeypatch, document.id)
+
+    field = db.query(ExtractedField).filter(ExtractedField.document_id == document.id).one()
+    assert field.bbox == {"page": 1, "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.1}
 
 
 def test_worker_redelivery_is_idempotent(client, db, monkeypatch) -> None:
