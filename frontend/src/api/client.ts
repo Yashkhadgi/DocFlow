@@ -28,14 +28,6 @@ const API_BASE_URL =
 
 const TOKEN_KEY = 'docflow_access_token';
 
-export function getApiErrorMessage(error: unknown, fallback: string): string {
-  if (typeof error !== 'object' || error === null) return fallback;
-  const response = error as { error?: { message?: unknown }; message?: unknown };
-  if (typeof response.error?.message === 'string') return response.error.message;
-  if (typeof response.message === 'string') return response.message;
-  return fallback;
-}
-
 // In-memory token store backed by localStorage
 let memoryToken: string | null = localStorage.getItem(TOKEN_KEY);
 
@@ -140,7 +132,7 @@ export async function register(req: RegisterRequest): Promise<User> {
 export async function login(req: LoginRequest): Promise<AuthResponse> {
   let authData: AuthResponse;
   if (isMockMode()) {
-    authData = await mockDatabase.login();
+    authData = await mockDatabase.login(req);
   } else {
     authData = await apiFetch<AuthResponse>('/auth/login', {
       method: 'POST',

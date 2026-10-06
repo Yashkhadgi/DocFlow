@@ -6,7 +6,9 @@ import { getAuthToken, isMockMode, logout } from '../api/client';
 const navLinks = [
   { path: '/', label: 'Dashboard' },
   { path: '/upload', label: 'Upload' },
+  { path: '/documents/33333333-3333-3333-3333-333333333333', label: 'Review Demo' },
   { path: '/export', label: 'Export' },
+  { path: '/verify', label: 'C1 Verification' },
 ];
 
 export const Navbar: React.FC = () => {

@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadDocuments, getApiErrorMessage } from '../api/client';
+import { uploadDocuments } from '../api/client';
 import type { UploadResultItem } from '../api/types';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
+import { Button } from '../components/Button';
+import { StatusBadge } from '../components/StatusBadge';
+import { Badge } from '../components/Badge';
+import { useToast } from '../components/Toast';
 
 export const UploadPage: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadResults, setUploadResults] = useState<UploadResultItem[] | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -22,8 +28,9 @@ export const UploadPage: React.FC = () => {
     try {
       const res = await uploadDocuments(selectedFiles);
       setUploadResults(res.results);
-    } catch (err: unknown) {
-      alert('Upload failed: ' + getApiErrorMessage(err, 'Unknown error'));
+      toast.success(`Successfully submitted batch of ${res.results.length} files`);
+    } catch (err: any) {
+      toast.error('Upload failed: ' + (err?.error?.message || err?.message));
     } finally {
       setIsUploading(false);
     }
@@ -37,47 +44,53 @@ export const UploadPage: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-white">Upload Invoices</h1>
-        <p className="text-sm text-slate-400">
-          Bulk upload your invoices (PDF, JPG, PNG up to 10 MB per file, max 20 files)
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Upload Invoices</h1>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Bulk upload PDF, JPG, or PNG files (max 10 MB per file, max 20 files per batch)
         </p>
       </div>
 
       {/* Quick Test Presets */}
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Quick Test Batch Presets:
+      <Card className="p-4 bg-indigo-50/30 border-indigo-100">
+        <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider block mb-2">
+          Quick Test Presets:
         </span>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <button
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => addSimulatedFile('clean_invoice.pdf')}
-            className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded border border-slate-700"
           >
             + clean_invoice.pdf
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => addSimulatedFile('clean_invoice_copy.pdf')}
-            className="px-3 py-1 bg-purple-950/70 hover:bg-purple-900/70 text-purple-300 text-xs font-mono rounded border border-purple-800/80"
+            className="text-purple-700 bg-purple-50 hover:bg-purple-100 border-purple-200"
           >
-            + clean_invoice_copy.pdf (Duplicate Test)
-          </button>
-          <button
+            + clean_invoice_copy.pdf (Duplicate)
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => addSimulatedFile('notes.exe', 'application/x-msdownload')}
-            className="px-3 py-1 bg-rose-950/70 hover:bg-rose-900/70 text-rose-300 text-xs font-mono rounded border border-rose-800/80"
+            className="text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200"
           >
-            + notes.exe (Unsupported Type Test)
-          </button>
-          <button
+            + notes.exe (Unsupported Type)
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setSelectedFiles([])}
-            className="px-3 py-1 bg-slate-950 text-slate-400 text-xs rounded border border-slate-800"
           >
-            Clear Selected
-          </button>
+            Clear All
+          </Button>
         </div>
-      </div>
+      </Card>
 
-      {/* Upload Box */}
-      <div className="bg-slate-900/80 border-2 border-dashed border-slate-700 hover:border-indigo-500/50 rounded-2xl p-8 text-center space-y-4 transition-colors">
+      {/* Upload Drop Area */}
+      <Card className="border-2 border-dashed border-slate-300 hover:border-indigo-500 p-8 text-center transition-colors">
         <input
           type="file"
           multiple
@@ -88,84 +101,90 @@ export const UploadPage: React.FC = () => {
         />
         <label
           htmlFor="file-upload-input"
-          className="cursor-pointer inline-flex flex-col items-center justify-center space-y-2"
+          className="cursor-pointer inline-flex flex-col items-center justify-center space-y-3"
         >
-          <div className="w-12 h-12 rounded-xl bg-indigo-950/60 text-indigo-400 flex items-center justify-center text-xl font-bold border border-indigo-800/50">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-bold shadow-xs border border-indigo-100/60">
             &uarr;
           </div>
-          <span className="text-sm font-semibold text-slate-200">
-            Click to browse or drag and drop invoice files here
-          </span>
-          <span className="text-xs text-slate-500">PDF, JPG, PNG (Max 10 MB each)</span>
+          <div>
+            <span className="text-sm font-bold text-slate-900 block">
+              Click to browse or drag and drop invoice files here
+            </span>
+            <span className="text-xs text-slate-500">PDF, JPG, PNG (Max 10 MB per file)</span>
+          </div>
         </label>
-      </div>
+      </Card>
 
       {/* Selected Files List */}
       {selectedFiles.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-          <div className="flex justify-between items-center text-xs text-slate-400 font-semibold">
-            <span>Selected Files ({selectedFiles.length})</span>
-          </div>
-          <ul className="divide-y divide-slate-800">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">
+              Selected Files ({selectedFiles.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="divide-y divide-slate-100">
             {selectedFiles.map((f, i) => (
-              <li key={i} className="py-2 flex justify-between items-center font-mono text-xs text-slate-300">
-                <span>{f.name}</span>
+              <div key={i} className="py-2.5 flex justify-between items-center text-xs font-mono">
+                <span className="font-semibold text-slate-800">{f.name}</span>
                 <span className="text-slate-500">{(f.size / 1024).toFixed(1)} KB</span>
-              </li>
+              </div>
             ))}
-          </ul>
-          <button
-            onClick={handleUpload}
-            disabled={isUploading}
-            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-lg transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50"
-          >
-            {isUploading ? 'Uploading & Enqueuing...' : 'Submit Batch Upload'}
-          </button>
-        </div>
+            <div className="pt-4">
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                isLoading={isUploading}
+                onClick={handleUpload}
+              >
+                Submit Batch Upload
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Upload Results Display */}
       {uploadResults && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-            Batch Upload Outcome
-          </h3>
-          <div className="space-y-2">
+        <Card className="border-indigo-200">
+          <CardHeader>
+            <CardTitle className="text-sm">Batch Upload Outcome</CardTitle>
+            <CardDescription>Per-file upload and queueing status</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {uploadResults.map((res, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-3 rounded-lg border bg-slate-950 border-slate-800"
+                className="flex items-center justify-between p-3 rounded-lg border bg-slate-50 border-slate-200"
               >
-                <span className="font-mono text-sm text-slate-200">{res.filename}</span>
+                <span className="font-mono text-xs font-bold text-slate-800">
+                  {res.filename}
+                </span>
                 <div>
-                  {res.status === 'queued' && (
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                      Queued
-                    </span>
-                  )}
-                  {res.status === 'duplicate' && (
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-950 text-purple-300 border border-purple-800">
-                      Duplicate
-                    </span>
-                  )}
+                  {res.status === 'queued' && <StatusBadge status="queued" />}
+                  {res.status === 'duplicate' && <StatusBadge status="duplicate" />}
                   {res.error && (
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-950 text-rose-300 border border-rose-800">
+                    <Badge variant="red">
                       Error: {res.error.message}
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>
             ))}
-          </div>
-          <div className="pt-2">
-            <button
-              onClick={() => navigate('/')}
-              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg"
-            >
-              Go to Dashboard to track progress &rarr;
-            </button>
-          </div>
-        </div>
+
+            <div className="pt-2">
+              <Button
+                variant="secondary"
+                size="md"
+                fullWidth
+                onClick={() => navigate('/')}
+              >
+                Go to Dashboard to track progress &rarr;
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
