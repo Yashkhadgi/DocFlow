@@ -1,0 +1,517 @@
+{
+  "overall_accuracy_pct": 90.625,
+  "total_correct": 58,
+  "total_fields": 64,
+  "calibration": {
+    "avg_correct_confidence": 0.9336206896551724,
+    "avg_incorrect_confidence": 0.20000000000000004
+  },
+  "per_field_summary": {
+    "vendor_name": {
+      "correct": 8,
+      "total": 8,
+      "percentage": 100.0
+    },
+    "invoice_number": {
+      "correct": 7,
+      "total": 8,
+      "percentage": 87.5
+    },
+    "invoice_date": {
+      "correct": 7,
+      "total": 8,
+      "percentage": 87.5
+    },
+    "gstin": {
+      "correct": 7,
+      "total": 8,
+      "percentage": 87.5
+    },
+    "currency": {
+      "correct": 8,
+      "total": 8,
+      "percentage": 100.0
+    },
+    "subtotal": {
+      "correct": 7,
+      "total": 8,
+      "percentage": 87.5
+    },
+    "tax": {
+      "correct": 7,
+      "total": 8,
+      "percentage": 87.5
+    },
+    "total": {
+      "correct": 7,
+      "total": 8,
+      "percentage": 87.5
+    }
+  },
+  "samples": [
+    {
+      "filename": "bad_gstin.pdf",
+      "avg_confidence": 0.9325000000000001,
+      "matched_fields": 8,
+      "total_fields": 8,
+      "status": "PASS",
+      "fields": {
+        "vendor_name": {
+          "expected": "Delta Industrial Tools",
+          "actual": "Delta Industrial Tools",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-702",
+          "actual": "INV-2026-702",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "invoice_date": {
+          "expected": "2026-09-10",
+          "actual": "2026-09-10",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "gstin": {
+          "expected": "27INVALIDGSTIN99",
+          "actual": "27INVALIDGSTIN99",
+          "confidence": 0.6,
+          "matched": true
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "6000.00",
+          "actual": "6000.00",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "tax": {
+          "expected": "1080.00",
+          "actual": "1080.00",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "total": {
+          "expected": "7080.00",
+          "actual": "7080.00",
+          "confidence": 0.98,
+          "matched": true
+        }
+      },
+      "line_items_extracted": 2
+    },
+    {
+      "filename": "blurry_invoice.png",
+      "avg_confidence": 0.2625,
+      "matched_fields": 2,
+      "total_fields": 8,
+      "status": "2/8",
+      "fields": {
+        "vendor_name": {
+          "expected": "Sunrise Electricals Pvt Ltd",
+          "actual": "Sunrise Electricals Pvt Ltd",
+          "confidence": 0.4,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-119",
+          "actual": null,
+          "confidence": 0.0,
+          "matched": false
+        },
+        "invoice_date": {
+          "expected": "2026-06-05",
+          "actual": null,
+          "confidence": 0.0,
+          "matched": false
+        },
+        "gstin": {
+          "expected": "33AABCE3456J1Z1",
+          "actual": null,
+          "confidence": 0.0,
+          "matched": false
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.5,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "15000.00",
+          "actual": "18000.00",
+          "confidence": 0.4,
+          "matched": false
+        },
+        "tax": {
+          "expected": "2700.00",
+          "actual": "3240.00",
+          "confidence": 0.4,
+          "matched": false
+        },
+        "total": {
+          "expected": "17700.00",
+          "actual": "21240.00",
+          "confidence": 0.4,
+          "matched": false
+        }
+      },
+      "line_items_extracted": 2
+    },
+    {
+      "filename": "clean_invoice.pdf",
+      "avg_confidence": 0.9875,
+      "matched_fields": 8,
+      "total_fields": 8,
+      "status": "PASS",
+      "fields": {
+        "vendor_name": {
+          "expected": "Apex Infotech Solutions Pvt Ltd",
+          "actual": "Apex Infotech Solutions Pvt Ltd",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-001",
+          "actual": "INV-2026-001",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "invoice_date": {
+          "expected": "2026-09-15",
+          "actual": "2026-09-15",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "gstin": {
+          "expected": "27AABCA1234F1Z5",
+          "actual": "27AABCA1234F1Z5",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "10000.00",
+          "actual": "10000.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "tax": {
+          "expected": "1800.00",
+          "actual": "1800.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "total": {
+          "expected": "11800.00",
+          "actual": "11800.00",
+          "confidence": 0.99,
+          "matched": true
+        }
+      },
+      "line_items_extracted": 3
+    },
+    {
+      "filename": "clean_invoice_copy.pdf",
+      "avg_confidence": 0.9887500000000001,
+      "matched_fields": 8,
+      "total_fields": 8,
+      "status": "PASS",
+      "fields": {
+        "vendor_name": {
+          "expected": "Apex Infotech Solutions Pvt Ltd",
+          "actual": "Apex Infotech Solutions Pvt Ltd",
+          "confidence": 0.98,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-001",
+          "actual": "INV-2026-001",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "invoice_date": {
+          "expected": "2026-09-15",
+          "actual": "2026-09-15",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "gstin": {
+          "expected": "27AABCA1234F1Z5",
+          "actual": "27AABCA1234F1Z5",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "10000.00",
+          "actual": "10000.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "tax": {
+          "expected": "1800.00",
+          "actual": "1800.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "total": {
+          "expected": "11800.00",
+          "actual": "11800.00",
+          "confidence": 0.99,
+          "matched": true
+        }
+      },
+      "line_items_extracted": 3
+    },
+    {
+      "filename": "photo_invoice.jpg",
+      "avg_confidence": 0.87875,
+      "matched_fields": 8,
+      "total_fields": 8,
+      "status": "PASS",
+      "fields": {
+        "vendor_name": {
+          "expected": "Krishna Stationery & Office Supplies",
+          "actual": "Krishna Stationery & Office Supplies",
+          "confidence": 0.88,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-304",
+          "actual": "INV-2026-304",
+          "confidence": 0.88,
+          "matched": true
+        },
+        "invoice_date": {
+          "expected": "2026-07-10",
+          "actual": "2026-07-10",
+          "confidence": 0.88,
+          "matched": true
+        },
+        "gstin": {
+          "expected": "07AABCD9012H1Z8",
+          "actual": "07AABCD9012H1Z8",
+          "confidence": 0.85,
+          "matched": true
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.9,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "6500.00",
+          "actual": "6500.00",
+          "confidence": 0.88,
+          "matched": true
+        },
+        "tax": {
+          "expected": "1170.00",
+          "actual": "1170.00",
+          "confidence": 0.88,
+          "matched": true
+        },
+        "total": {
+          "expected": "7670.00",
+          "actual": "7670.00",
+          "confidence": 0.88,
+          "matched": true
+        }
+      },
+      "line_items_extracted": 2
+    },
+    {
+      "filename": "same_invoice_resaved.pdf",
+      "avg_confidence": 0.9900000000000001,
+      "matched_fields": 8,
+      "total_fields": 8,
+      "status": "PASS",
+      "fields": {
+        "vendor_name": {
+          "expected": "Apex Infotech Solutions Pvt Ltd",
+          "actual": "Apex Infotech Solutions Pvt Ltd",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-001",
+          "actual": "INV-2026-001",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "invoice_date": {
+          "expected": "2026-09-15",
+          "actual": "2026-09-15",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "gstin": {
+          "expected": "27AABCA1234F1Z5",
+          "actual": "27AABCA1234F1Z5",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "10000.00",
+          "actual": "10000.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "tax": {
+          "expected": "1800.00",
+          "actual": "1800.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "total": {
+          "expected": "11800.00",
+          "actual": "11800.00",
+          "confidence": 0.99,
+          "matched": true
+        }
+      },
+      "line_items_extracted": 3
+    },
+    {
+      "filename": "scanned_invoice.pdf",
+      "avg_confidence": 0.8887500000000002,
+      "matched_fields": 8,
+      "total_fields": 8,
+      "status": "PASS",
+      "fields": {
+        "vendor_name": {
+          "expected": "Bharat Heavy Logistics Ltd",
+          "actual": "Bharat Heavy Logistics Ltd",
+          "confidence": 0.88,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-882",
+          "actual": "INV-2026-882",
+          "confidence": 0.88,
+          "matched": true
+        },
+        "invoice_date": {
+          "expected": "2026-08-20",
+          "actual": "2026-08-20",
+          "confidence": 0.9,
+          "matched": true
+        },
+        "gstin": {
+          "expected": "29AABCB5678G1Z2",
+          "actual": "29AABCB5678G1Z2",
+          "confidence": 0.8,
+          "matched": true
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.95,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "26500.00",
+          "actual": "26500.00",
+          "confidence": 0.9,
+          "matched": true
+        },
+        "tax": {
+          "expected": "4770.00",
+          "actual": "4770.00",
+          "confidence": 0.9,
+          "matched": true
+        },
+        "total": {
+          "expected": "31270.00",
+          "actual": "31270.00",
+          "confidence": 0.9,
+          "matched": true
+        }
+      },
+      "line_items_extracted": 2
+    },
+    {
+      "filename": "wrong_total.pdf",
+      "avg_confidence": 0.9900000000000001,
+      "matched_fields": 8,
+      "total_fields": 8,
+      "status": "PASS",
+      "fields": {
+        "vendor_name": {
+          "expected": "Metro Hardware Supplies",
+          "actual": "Metro Hardware Supplies",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "invoice_number": {
+          "expected": "INV-2026-550",
+          "actual": "INV-2026-550",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "invoice_date": {
+          "expected": "2026-09-01",
+          "actual": "2026-09-01",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "gstin": {
+          "expected": "27AABCF7890K1Z4",
+          "actual": "27AABCF7890K1Z4",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "currency": {
+          "expected": "INR",
+          "actual": "INR",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "subtotal": {
+          "expected": "10000.00",
+          "actual": "10000.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "tax": {
+          "expected": "1800.00",
+          "actual": "1800.00",
+          "confidence": 0.99,
+          "matched": true
+        },
+        "total": {
+          "expected": "11500.00",
+          "actual": "11500.00",
+          "confidence": 0.99,
+          "matched": true
+        }
+      },
+      "line_items_extracted": 2
+    }
+  ]
+}
