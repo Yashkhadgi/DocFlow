@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { getDocuments } from '../api/client';
+import { getDocuments, getApiErrorMessage } from '../api/client';
 import type { DocumentListItem, DocumentStatus } from '../api/types';
 
 export const DashboardPage: React.FC = () => {
@@ -129,7 +129,7 @@ export const DashboardPage: React.FC = () => {
           <div className="p-12 text-center text-slate-400">Loading documents...</div>
         ) : isError ? (
           <div className="p-12 text-center text-rose-400">
-            Error loading documents: {(error as any)?.error?.message || 'Unknown error'}
+            Error loading documents: {getApiErrorMessage(error, 'Unknown error')}
           </div>
         ) : data?.items.length === 0 ? (
           <div className="p-12 text-center text-slate-500">No documents found.</div>

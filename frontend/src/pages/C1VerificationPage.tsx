@@ -11,13 +11,14 @@ import {
   exportDocuments,
   isMockMode,
   getAuthToken,
+  getApiErrorMessage,
 } from '../api/client';
 
 interface TestResult {
   name: string;
   passed: boolean;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export const C1VerificationPage: React.FC = () => {
@@ -28,7 +29,7 @@ export const C1VerificationPage: React.FC = () => {
     setIsRunning(true);
     const testLogs: TestResult[] = [];
 
-    const addLog = (name: string, passed: boolean, message: string, details?: any) => {
+    const addLog = (name: string, passed: boolean, message: string, details?: unknown) => {
       testLogs.push({ name, passed, message, details });
       setResults([...testLogs]);
     };
@@ -46,8 +47,8 @@ export const C1VerificationPage: React.FC = () => {
       try {
         const health = await getHealth();
         addLog('2. GET /health', health.status === 'ok', `Returned status: ${health.status}`, health);
-      } catch (err: any) {
-        addLog('2. GET /health', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('2. GET /health', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 3: POST /auth/login
@@ -59,8 +60,8 @@ export const C1VerificationPage: React.FC = () => {
           !!authRes.access_token && storedToken === authRes.access_token,
           `Access token retrieved and persisted in memory/localStorage (${authRes.user.email})`
         );
-      } catch (err: any) {
-        addLog('3. POST /auth/login', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('3. POST /auth/login', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 4: GET /documents
@@ -71,8 +72,8 @@ export const C1VerificationPage: React.FC = () => {
           Array.isArray(docs.items) && typeof docs.counts === 'object',
           `Loaded ${docs.items.length} items. Counts: queued=${docs.counts.queued}, needs_review=${docs.counts.needs_review}, approved=${docs.counts.approved}, failed=${docs.counts.failed}, duplicate=${docs.counts.duplicate}`
         );
-      } catch (err: any) {
-        addLog('4. GET /documents', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('4. GET /documents', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 5: POST /documents/upload & Duplicate/Unsupported simulation
@@ -97,8 +98,8 @@ export const C1VerificationPage: React.FC = () => {
           `Clean status: ${cleanResult?.status}, Copy status: ${copyResult?.status}, Exe error: ${exeResult?.error?.code}`,
           uploadRes
         );
-      } catch (err: any) {
-        addLog('5. POST /documents/upload', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('5. POST /documents/upload', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 6: GET /documents/{id}
@@ -110,8 +111,8 @@ export const C1VerificationPage: React.FC = () => {
           `Document filename: ${docDetail.filename}, fields count: ${docDetail.fields.length}, issues count: ${docDetail.validation_issues.length}`,
           docDetail
         );
-      } catch (err: any) {
-        addLog('6. GET /documents/{id}', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('6. GET /documents/{id}', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 7: PATCH /documents/{id}/fields (Fix total mismatch and revalidate)
@@ -127,8 +128,8 @@ export const C1VerificationPage: React.FC = () => {
           totalField?.reviewed_value === '11800.00' && mismatchResolved,
           `Updated total to 11800.00. total_mismatch issue cleared: ${mismatchResolved}`
         );
-      } catch (err: any) {
-        addLog('7. PATCH /documents/{id}/fields', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('7. PATCH /documents/{id}/fields', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 8: POST /documents/{id}/approve
@@ -139,8 +140,8 @@ export const C1VerificationPage: React.FC = () => {
           approvedDoc.status === 'approved',
           `Document status transitioned to '${approvedDoc.status}'`
         );
-      } catch (err: any) {
-        addLog('8. POST /documents/{id}/approve', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('8. POST /documents/{id}/approve', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 9: POST /documents/{id}/retry
@@ -151,8 +152,8 @@ export const C1VerificationPage: React.FC = () => {
           retriedDoc.status === 'queued',
           `Document status reset from 'failed' to '${retriedDoc.status}'`
         );
-      } catch (err: any) {
-        addLog('9. POST /documents/{id}/retry', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('9. POST /documents/{id}/retry', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
 
       // Test 10: GET /export
@@ -164,8 +165,8 @@ export const C1VerificationPage: React.FC = () => {
           csvBlob.size > 0 && jsonBlob.size > 0,
           `Generated CSV blob (${csvBlob.size} bytes) & JSON blob (${jsonBlob.size} bytes)`
         );
-      } catch (err: any) {
-        addLog('10. GET /export', false, `Failed: ${err.message || 'Error'}`);
+      } catch (err: unknown) {
+        addLog('10. GET /export', false, `Failed: ${getApiErrorMessage(err, 'Error')}`);
       }
     } finally {
       setIsRunning(false);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { exportDocuments } from '../api/client';
+import { exportDocuments, getApiErrorMessage } from '../api/client';
 
 export const ExportPage: React.FC = () => {
   const [format, setFormat] = useState<'csv' | 'json'>('csv');
@@ -17,8 +17,8 @@ export const ExportPage: React.FC = () => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      alert('Export failed: ' + (err?.error?.message || err?.message));
+    } catch (err: unknown) {
+      alert('Export failed: ' + getApiErrorMessage(err, 'Unknown error'));
     } finally {
       setIsExporting(false);
     }

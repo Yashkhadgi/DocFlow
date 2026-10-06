@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, register } from '../api/client';
+import { login, register, getApiErrorMessage } from '../api/client';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,8 +23,8 @@ export const LoginPage: React.FC = () => {
         await login({ email, password });
       }
       navigate('/');
-    } catch (err: any) {
-      setErrorMsg(err?.error?.message || err?.message || 'Authentication failed');
+    } catch (err: unknown) {
+      setErrorMsg(getApiErrorMessage(err, 'Authentication failed'));
     } finally {
       setLoading(false);
     }

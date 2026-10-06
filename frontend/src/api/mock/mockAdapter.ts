@@ -8,7 +8,6 @@ import type {
   ExportParams,
   GetDocumentsParams,
   HealthResponse,
-  LoginRequest,
   PatchDocumentFieldsRequest,
   RegisterRequest,
   UploadResponse,
@@ -99,7 +98,7 @@ class MockDatabase {
     };
   }
 
-  async login(_req: LoginRequest): Promise<AuthResponse> {
+  async login(): Promise<AuthResponse> {
     await delay(250);
     return clone(mockAuthFixture);
   }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -6,8 +6,8 @@ import {
   updateDocumentFields,
   approveDocument,
   retryDocument,
+  getApiErrorMessage,
 } from '../api/client';
-import type { LineItem } from '../api/types';
 
 export const ReviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,36 +19,25 @@ export const ReviewPage: React.FC = () => {
     enabled: !!id,
   });
 
-  const [fieldEdits, setFieldEdits] = useState<Record<string, string>>({});
-  const [lineItemsEdits, setLineItemsEdits] = useState<LineItem[]>([]);
+  const [draft, setDraft] = useState<{ id: string; fields: Record<string, string> } | null>(null);
+  const fieldEdits = draft && draft.id === id ? draft.fields : {};
   const [actionMsg, setActionMsg] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-
-  useEffect(() => {
-    if (doc) {
-      const initialFields: Record<string, string> = {};
-      doc.fields.forEach((f) => {
-        initialFields[f.field_name] = f.reviewed_value ?? f.value ?? '';
-      });
-      setFieldEdits(initialFields);
-      setLineItemsEdits(doc.line_items || []);
-    }
-  }, [doc]);
 
   const updateMutation = useMutation({
     mutationFn: () =>
       updateDocumentFields(id!, {
         fields: fieldEdits,
-        line_items: lineItemsEdits,
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData(['document', id], updated);
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      setDraft(null);
       setActionMsg({ type: 'success', msg: 'Fields updated and revalidated!' });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setActionMsg({
         type: 'error',
-        msg: err?.error?.message || err?.message || 'Failed to update fields',
+        msg: getApiErrorMessage(err, 'Failed to update fields'),
       });
     },
   });
@@ -60,10 +49,10 @@ export const ReviewPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       setActionMsg({ type: 'success', msg: 'Document approved successfully!' });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setActionMsg({
         type: 'error',
-        msg: err?.error?.message || err?.message || 'Failed to approve document',
+        msg: getApiErrorMessage(err, 'Failed to approve document'),
       });
     },
   });
@@ -75,10 +64,10 @@ export const ReviewPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       setActionMsg({ type: 'success', msg: 'Document re-queued for extraction!' });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setActionMsg({
         type: 'error',
-        msg: err?.error?.message || err?.message || 'Failed to retry document',
+        msg: getApiErrorMessage(err, 'Failed to retry document'),
       });
     },
   });
@@ -87,7 +76,7 @@ export const ReviewPage: React.FC = () => {
   if (isError || !doc) {
     return (
       <div className="p-12 text-center text-rose-400 space-y-4">
-        <div>Error: {(error as any)?.error?.message || 'Document not found'}</div>
+        <div>Error: {getApiErrorMessage(error, 'Document not found')}</div>
         <Link to="/" className="text-xs text-indigo-400 underline">Back to Dashboard</Link>
       </div>
     );
@@ -227,11 +216,11 @@ export const ReviewPage: React.FC = () => {
                     <input
                       type="text"
                       disabled={doc.status !== 'needs_review'}
-                      value={fieldEdits[field.field_name] ?? ''}
+                      value={fieldEdits[field.field_name] ?? field.reviewed_value ?? field.value ?? ''}
                       onChange={(e) =>
-                        setFieldEdits({
-                          ...fieldEdits,
-                          [field.field_name]: e.target.value,
+                        setDraft({
+                          id: id!,
+                          fields: { ...fieldEdits, [field.field_name]: e.target.value },
                         })
                       }
                       className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono disabled:opacity-60"

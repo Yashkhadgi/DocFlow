@@ -13,7 +13,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
       <footer className="bg-slate-900 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        DocFlow SaaS &bull; Person C Task C1 Implementation &bull; React + Vite + Tailwind + React Router + TanStack Query
+        DocFlow
       </footer>
     </div>
   );

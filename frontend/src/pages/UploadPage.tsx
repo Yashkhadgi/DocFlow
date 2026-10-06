@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadDocuments } from '../api/client';
+import { uploadDocuments, getApiErrorMessage } from '../api/client';
 import type { UploadResultItem } from '../api/types';
 
 export const UploadPage: React.FC = () => {
@@ -22,8 +22,8 @@ export const UploadPage: React.FC = () => {
     try {
       const res = await uploadDocuments(selectedFiles);
       setUploadResults(res.results);
-    } catch (err: any) {
-      alert('Upload failed: ' + (err?.error?.message || err?.message));
+    } catch (err: unknown) {
+      alert('Upload failed: ' + getApiErrorMessage(err, 'Unknown error'));
     } finally {
       setIsUploading(false);
     }
