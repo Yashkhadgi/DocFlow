@@ -1,9 +1,10 @@
 #!/bin/sh
 set -e
 
-# If starting the API server via uvicorn, wait for DB and apply migrations
-if [ "$1" = "uvicorn" ] || echo "$*" | grep -q "uvicorn"; then
+# If explicitly requested via WAIT_FOR_DB or RUN_MIGRATIONS, wait for DB and apply migrations
+if [ "$WAIT_FOR_DB" = "true" ] || [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Waiting for database connection..."
+
     python - <<'EOF'
 import sys
 import time

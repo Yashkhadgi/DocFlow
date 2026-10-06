@@ -1,8 +1,12 @@
 from collections.abc import Generator
 
+import email_validator
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+
+email_validator.TEST_ENVIRONMENT = True
+
 
 from app.db import SessionLocal
 from app.main import app

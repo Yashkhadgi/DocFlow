@@ -1,0 +1,99 @@
+services:
+  - type: web
+    name: docflow-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: /bin/sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    plan: free
+    region: oregon
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        sync: false
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: PRESIGNED_URL_EXPIRES_SECONDS
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: CONFIDENCE_THRESHOLD
+        sync: false
+      - key: USE_STUB_EXTRACTOR
+        sync: false
+      - key: JOB_MAX_ATTEMPTS
+        sync: false
+      - key: FORCE_FAIL_FILENAME_CONTAINS
+        sync: false
+      - key: FORCE_FAIL_UNTIL_ATTEMPT
+        sync: false
+
+  - type: worker
+    name: docflow-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A app.workers.celery_app.celery_app worker --loglevel=info
+    plan: starter
+    region: oregon
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        sync: false
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: PRESIGNED_URL_EXPIRES_SECONDS
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: CONFIDENCE_THRESHOLD
+        sync: false
+      - key: USE_STUB_EXTRACTOR
+        sync: false
+      - key: JOB_MAX_ATTEMPTS
+        sync: false
+      - key: FORCE_FAIL_FILENAME_CONTAINS
+        sync: false
+      - key: FORCE_FAIL_UNTIL_ATTEMPT
+        sync: false
