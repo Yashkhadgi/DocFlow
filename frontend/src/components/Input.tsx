@@ -29,16 +29,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
     return (
-      <div className={`${fullWidth ? 'w-full' : ''} space-y-1.5`}>
+      <div className={`${fullWidth ? 'w-full' : ''} space-y-1`}>
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold text-slate-700 select-none"
+            className="block text-xs font-semibold text-[#44403C] uppercase tracking-wider select-none font-sans"
           >
             {label}
           </label>
         )}
-        <div className="relative rounded-lg shadow-xs">
+        <div className="relative rounded-none">
           {startIcon && (
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
               {startIcon}
@@ -50,17 +50,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             disabled={disabled}
             className={`
-              block w-full rounded-lg border text-sm text-slate-900 placeholder-slate-400 bg-white
-              transition-colors duration-150 ease-in-out
-              focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600
-              disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
-              ${startIcon ? 'pl-9' : 'pl-3'}
-              ${endIcon ? 'pr-9' : 'pr-3'}
-              ${pyPaddingStyle(props.size)}
+              block w-full rounded-none border text-sm text-[#1C1917] placeholder-[#A8A29E] bg-white
+              transition-colors duration-150 ease-in-out py-2.5 px-3 font-sans
+              focus:outline-none focus:border-[#BD3A17] focus:ring-1 focus:ring-[#BD3A17]
+              disabled:bg-[#F5F2EB] disabled:text-[#78716C] disabled:cursor-not-allowed
+              ${startIcon ? 'pl-9' : ''}
+              ${endIcon ? 'pr-9' : ''}
               ${
                 error
-                  ? 'border-rose-500 text-rose-900 focus:border-rose-500 focus:ring-rose-500/20'
-                  : 'border-slate-300'
+                  ? 'border-[#C5221F] text-[#C5221F] focus:border-[#C5221F] focus:ring-[#C5221F]'
+                  : 'border-[#D5D1C8]'
               }
               ${className}
             `}
@@ -74,9 +73,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
 
-        {error && <p className="text-xs font-medium text-rose-600 mt-1">{error}</p>}
+        {error && <p className="text-xs font-medium text-[#C5221F] mt-1">{error}</p>}
         {!error && helperText && (
-          <p className="text-xs text-slate-500 mt-1">{helperText}</p>
+          <p className="text-xs text-[#78716C] mt-1">{helperText}</p>
         )}
       </div>
     );
@@ -84,7 +83,3 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
-
-function pyPaddingStyle(_size?: any): string {
-  return 'py-2';
-}

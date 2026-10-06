@@ -24,32 +24,32 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none select-none';
+    'inline-flex items-center justify-center font-medium rounded-none transition-all focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed select-none border font-sans';
 
   const variantStyles = {
     primary:
-      'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 focus:ring-indigo-500 border border-transparent',
+      'bg-[#BD3A17] hover:bg-[#A33113] text-white border-transparent font-semibold shadow-xs',
     secondary:
-      'bg-slate-100 hover:bg-slate-200 text-slate-700 focus:ring-slate-400 border border-slate-200/80 shadow-xs',
+      'bg-white hover:bg-[#F5F2EB] text-[#222222] border-[#D5D1C8]',
     danger:
-      'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20 focus:ring-rose-500 border border-transparent',
+      'bg-[#C5221F] hover:bg-[#A81C19] text-white border-transparent font-semibold',
     outline:
-      'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 focus:ring-indigo-500 shadow-xs',
+      'bg-white hover:bg-[#F5F2EB] text-[#444444] border-[#D5D1C8]',
     ghost:
-      'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900 focus:ring-slate-400',
+      'bg-transparent hover:bg-[#F5F2EB] text-[#555555] border-transparent',
   };
 
   const sizeStyles = {
-    sm: 'px-2.5 py-1.5 text-xs gap-1.5',
+    sm: 'px-2.5 py-1 text-xs gap-1.5',
     md: 'px-4 py-2 text-sm gap-2',
-    lg: 'px-5 py-2.5 text-base gap-2.5',
+    lg: 'px-5 py-2.5 text-sm font-semibold gap-2',
   };
 
   const spinnerColors = {
     primary: 'white',
     secondary: 'slate',
     danger: 'white',
-    outline: 'primary',
+    outline: 'slate',
     ghost: 'slate',
   } as const;
 
