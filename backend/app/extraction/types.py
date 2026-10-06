@@ -11,10 +11,16 @@ class ExtractionError(Exception):
         message (str): Human-readable error description (safe for UI display).
         retryable (bool): Whether the worker should retry this failure with backoff.
     """
-    def __init__(self, message: str, retryable: bool = True):
+    def __init__(
+        self,
+        message: str,
+        retryable: bool = True,
+        fallback_allowed: bool = False,
+    ):
         super().__init__(message)
         self.message = message
         self.retryable = retryable
+        self.fallback_allowed = fallback_allowed
 
 
 class BBox(BaseModel):

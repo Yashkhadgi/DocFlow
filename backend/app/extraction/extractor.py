@@ -9,8 +9,12 @@ import re
 import time
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from functools import lru_cache
 from typing import Any
 
+from app.config import settings
+
+from .budget import BudgetExceeded, ProjectExtractionBudget
 from .prompts import EXTRACTION_SYSTEM_PROMPT
 from .types import ExtractionError, ExtractionResult, FieldValue, LineItem
 
@@ -28,8 +32,12 @@ EXPECTED_FIELDS = [
 ]
 
 MAX_FILE_SIZE_BYTES = 32 * 1024 * 1024  # 32 MB Anthropic limit
-MAX_PDF_PAGES = 100
 MAX_IMAGE_DIMENSION = 8000
+
+
+@lru_cache(maxsize=1)
+def _build_budget() -> ProjectExtractionBudget:
+    return ProjectExtractionBudget.from_settings(settings)
 
 
 def _redact_api_keys(text: str) -> str:
@@ -71,9 +79,9 @@ def _validate_input_file(file_bytes: bytes, mime_type: str) -> str:
                     "PDF is password-protected or encrypted. Please upload an unlocked PDF.",
                     retryable=False,
                 )
-            if len(reader.pages) > MAX_PDF_PAGES:
+            if len(reader.pages) > settings.llm_max_pdf_pages:
                 raise ExtractionError(
-                    f"PDF page count ({len(reader.pages)}) exceeds maximum limit of {MAX_PDF_PAGES} pages.",
+                    f"PDF page count ({len(reader.pages)}) exceeds maximum limit of {settings.llm_max_pdf_pages} pages.",
                     retryable=False,
                 )
         except ExtractionError:
@@ -239,7 +247,7 @@ def normalize_extraction_data(raw_data: dict[str, Any]) -> ExtractionResult:
     )
 
 
-def extract(file_bytes: bytes, mime_type: str) -> ExtractionResult:
+def _extract_anthropic(file_bytes: bytes, mime_type: str) -> ExtractionResult:
     """
     Extract structured data from an invoice document using Anthropic Claude Vision.
     Performs pre-flight validation on inputs.
@@ -254,9 +262,9 @@ def extract(file_bytes: bytes, mime_type: str) -> ExtractionResult:
     # 2. Check API key
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        raise ExtractionError("ANTHROPIC_API_KEY environment variable is not set.", retryable=False)
+        raise ExtractionError("ANTHROPIC_API_KEY environment variable is not set.", retryable=False, fallback_allowed=True)
 
-    model_name = os.environ.get("LLM_MODEL", "claude-sonnet-5-5")
+    model_name = os.environ.get("LLM_MODEL", settings.llm_model)
 
     try:
         from anthropic import (
@@ -270,10 +278,14 @@ def extract(file_bytes: bytes, mime_type: str) -> ExtractionResult:
             RateLimitError,
         )
     except ImportError as e:
-        raise ExtractionError(f"Anthropic SDK not installed: {e}", retryable=False) from e
+        raise ExtractionError("Anthropic SDK is not installed.", retryable=False, fallback_allowed=True) from e
 
     # 3. Lazy client initialization
-    client = Anthropic(api_key=api_key)
+    try:
+        client = Anthropic(api_key=api_key)
+    except Exception as err:
+        raise ExtractionError("Anthropic client initialization failed.", retryable=True, fallback_allowed=True) from err
+    budget = _build_budget()
     b64_data = base64.b64encode(file_bytes).decode("utf-8")
 
     if normalized_mime == "application/pdf":
@@ -311,10 +323,22 @@ def extract(file_bytes: bytes, mime_type: str) -> ExtractionResult:
     for attempt in range(1, 4):
         start_time = time.perf_counter()
         try:
+            token_estimate = client.messages.count_tokens(
+                model=model_name,
+                system=EXTRACTION_SYSTEM_PROMPT,
+                messages=messages,
+            )
+            input_tokens = int(token_estimate.input_tokens)
+            if input_tokens > settings.llm_max_input_tokens:
+                raise ExtractionError(
+                    f"Document input token limit exceeded ({input_tokens}>{settings.llm_max_input_tokens}).",
+                    retryable=False,
+                )
+            reservation = budget.reserve(input_tokens)
             logger.info("Calling Anthropic API (attempt %d/3, size=%d bytes, mime=%s)", attempt, file_size, normalized_mime)
             response = client.messages.create(
                 model=model_name,
-                max_tokens=4096,
+                max_tokens=settings.llm_max_output_tokens,
                 system=EXTRACTION_SYSTEM_PROMPT,
                 messages=messages,
                 timeout=60.0,
@@ -322,14 +346,32 @@ def extract(file_bytes: bytes, mime_type: str) -> ExtractionResult:
 
             duration = time.perf_counter() - start_time
             usage = getattr(response, "usage", None)
-            input_tokens = getattr(usage, "input_tokens", "N/A") if usage else "N/A"
-            output_tokens = getattr(usage, "output_tokens", "N/A") if usage else "N/A"
+            billed_input_tokens = input_tokens
+            billed_output_tokens = settings.llm_max_output_tokens
+            if usage:
+                billed_input_tokens = sum(
+                    int(getattr(usage, name, 0) or 0)
+                    for name in (
+                        "input_tokens",
+                        "cache_creation_input_tokens",
+                        "cache_read_input_tokens",
+                    )
+                ) or input_tokens
+                billed_output_tokens = int(
+                    getattr(usage, "output_tokens", settings.llm_max_output_tokens)
+                    or settings.llm_max_output_tokens
+                )
+            budget.settle(
+                reservation,
+                input_tokens=billed_input_tokens,
+                output_tokens=billed_output_tokens,
+            )
 
             logger.info(
                 "Document extraction completed: duration=%.2fs, input_tokens=%s, output_tokens=%s, attempt=%d",
                 duration,
-                input_tokens,
-                output_tokens,
+                billed_input_tokens,
+                billed_output_tokens,
                 attempt,
             )
 
@@ -356,34 +398,130 @@ def extract(file_bytes: bytes, mime_type: str) -> ExtractionResult:
                     "content": f"The response was not valid JSON: {parse_err}. Please fix and output ONLY valid JSON.",
                 })
 
+        except BudgetExceeded as budget_err:
+            raise ExtractionError(str(budget_err), retryable=False) from budget_err
+
+        except ExtractionError:
+            raise
+
         except AuthenticationError as auth_err:
             msg = _redact_api_keys(f"Anthropic authentication failed: {auth_err}")
-            raise ExtractionError(msg, retryable=False) from auth_err
+            raise ExtractionError(msg, retryable=False, fallback_allowed=True) from auth_err
 
         except (BadRequestError, NotFoundError) as client_err:
             msg = _redact_api_keys(f"Anthropic API client error: {client_err}")
-            raise ExtractionError(msg, retryable=False) from client_err
+            raise ExtractionError(msg, retryable=False, fallback_allowed=True) from client_err
 
         except RateLimitError as rl_err:
             msg = _redact_api_keys(f"Anthropic API rate limit exceeded: {rl_err}")
-            raise ExtractionError(msg, retryable=True) from rl_err
+            raise ExtractionError(msg, retryable=True, fallback_allowed=True) from rl_err
 
         except APITimeoutError as timeout_err:
             msg = _redact_api_keys(f"Anthropic API request timed out: {timeout_err}")
-            raise ExtractionError(msg, retryable=True) from timeout_err
+            raise ExtractionError(msg, retryable=True, fallback_allowed=True) from timeout_err
 
         except APIConnectionError as conn_err:
             msg = _redact_api_keys(f"Anthropic API connection error: {conn_err}")
-            raise ExtractionError(msg, retryable=True) from conn_err
+            raise ExtractionError(msg, retryable=True, fallback_allowed=True) from conn_err
 
         except APIError as api_err:
             status_code = getattr(api_err, "status_code", 500)
             is_retryable = (status_code >= 500 or status_code == 429)
             msg = _redact_api_keys(f"Anthropic API error (status {status_code}): {api_err}")
-            raise ExtractionError(msg, retryable=is_retryable) from api_err
+            raise ExtractionError(msg, retryable=is_retryable, fallback_allowed=True) from api_err
 
         except Exception as err:
             msg = _redact_api_keys(f"Unexpected extraction error: {err}")
-            raise ExtractionError(msg, retryable=True) from err
+            raise ExtractionError("Anthropic extraction provider failed.", retryable=True, fallback_allowed=True) from err
 
-    raise ExtractionError(f"Extraction failed after 3 attempts: {last_error_msg}", retryable=True)
+    raise ExtractionError(
+        f"Extraction failed after 3 attempts: {last_error_msg}",
+        retryable=True,
+        fallback_allowed=True,
+    )
+
+
+def _extract_gemini(file_bytes: bytes, mime_type: str) -> ExtractionResult:
+    """Use Gemini as a document-capable provider fallback."""
+    normalized_mime = _validate_input_file(file_bytes, mime_type)
+    api_key = os.environ.get("GEMINI_API_KEY") or settings.gemini_api_key
+    if not api_key:
+        raise ExtractionError("Gemini API key is not configured.", retryable=False)
+
+    import requests
+
+    model = os.environ.get("GEMINI_MODEL", settings.gemini_model)
+    encoded = base64.b64encode(file_bytes).decode("ascii")
+    prompt_parts = [
+        {"inlineData": {"mimeType": normalized_mime, "data": encoded}},
+        {"text": "Extract all fields and line items according to the schema. Return valid JSON only."},
+    ]
+    body = {
+        "systemInstruction": {"parts": [{"text": EXTRACTION_SYSTEM_PROMPT}]},
+        "contents": [{"role": "user", "parts": prompt_parts}],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "maxOutputTokens": settings.llm_max_output_tokens,
+        },
+    }
+    base_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
+    headers = {"x-goog-api-key": api_key, "content-type": "application/json"}
+    budget = _build_budget()
+    try:
+        count_response = requests.post(
+            f"{base_url}:countTokens", headers=headers, json={key: value for key, value in body.items() if key != "generationConfig"}, timeout=30,
+        )
+        count_response.raise_for_status()
+        input_tokens = int(count_response.json().get("totalTokens", 0))
+        if input_tokens <= 0:
+            raise ExtractionError("Gemini returned an invalid token estimate.", retryable=True)
+        if input_tokens > settings.llm_max_input_tokens:
+            raise ExtractionError(
+                f"Document input token limit exceeded ({input_tokens}>{settings.llm_max_input_tokens}).",
+                retryable=False,
+            )
+        reservation = budget.reserve(input_tokens)
+        response = requests.post(f"{base_url}:generateContent", headers=headers, json=body, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        text = "".join(
+            part.get("text", "")
+            for part in data["candidates"][0]["content"]["parts"]
+        )
+        usage = data.get("usageMetadata", {})
+        budget.settle(
+            reservation,
+            input_tokens=int(usage.get("promptTokenCount") or input_tokens),
+            output_tokens=int(usage.get("candidatesTokenCount") or settings.llm_max_output_tokens),
+        )
+        return normalize_extraction_data(json.loads(clean_json_text(text)))
+    except BudgetExceeded as exc:
+        raise ExtractionError(str(exc), retryable=False) from exc
+    except ExtractionError:
+        raise
+    except requests.HTTPError as exc:
+        status = getattr(exc.response, "status_code", 500)
+        raise ExtractionError(
+            f"Gemini extraction provider failed (status {status}).",
+            retryable=status >= 500 or status == 429,
+        ) from exc
+    except (requests.RequestException, KeyError, IndexError, TypeError, ValueError) as exc:
+        raise ExtractionError("Gemini extraction provider failed.", retryable=True) from exc
+
+
+def extract(file_bytes: bytes, mime_type: str) -> ExtractionResult:
+    """Try Anthropic first and fall back to Gemini only on provider failures."""
+    try:
+        return _extract_anthropic(file_bytes, mime_type)
+    except ExtractionError as primary_error:
+        gemini_key = os.environ.get("GEMINI_API_KEY") or settings.gemini_api_key
+        if not (primary_error.fallback_allowed and settings.gemini_fallback_enabled and gemini_key):
+            raise
+        logger.warning("Anthropic unavailable; attempting Gemini fallback (%s)", type(primary_error).__name__)
+        try:
+            return _extract_gemini(file_bytes, mime_type)
+        except ExtractionError as backup_error:
+            raise ExtractionError(
+                "both extraction providers failed; retry may succeed.",
+                retryable=backup_error.retryable,
+            ) from backup_error

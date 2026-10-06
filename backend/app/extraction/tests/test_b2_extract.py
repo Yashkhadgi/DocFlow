@@ -132,3 +132,6 @@ def test_extract_mock_success(mock_anthropic_class):
     assert result.fields["vendor_name"].value == "Apex Infotech Solutions Pvt Ltd"
     assert result.fields["total"].value == "11800.00"
     assert len(result.line_items) == 1
+    request = mock_client.messages.create.call_args.kwargs
+    assert request["model"] == "claude-haiku-4-5-20251001"
+    assert request["max_tokens"] == 1024
