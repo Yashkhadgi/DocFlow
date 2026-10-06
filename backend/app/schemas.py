@@ -53,3 +53,9 @@ class PatchDocumentFieldsRequest(BaseModel):
 
 class ApproveDocumentRequest(BaseModel):
     force: bool = False
+
+
+class RecoverStubGeneratedRequest(BaseModel):
+    document_ids: list[UUID] = Field(min_length=1, max_length=50)
+    spend_limit_usd: float = Field(default=0.0, ge=0)
+    dry_run: bool = False

@@ -10,9 +10,10 @@ from uuid import UUID
 
 from botocore.exceptions import ClientError
 from celery.exceptions import Retry as CeleryRetry
+from sqlalchemy import text
 
 from app.config import settings
-from app.db import SessionLocal
+from app.db import SessionLocal, engine
 from app.models import Document, ExtractedField, Job, LineItem, ValidationIssue
 from app.services.storage import storage
 from app.workers.celery_app import celery_app
@@ -31,8 +32,18 @@ logger = logging.getLogger(__name__)
     reject_on_worker_lost=True,
 )
 def process_document(self, document_id: str) -> None:
+    lock_key = UUID(document_id).int & ((1 << 63) - 1)
+    lock_connection = engine.connect()
+    acquired = False
     db = SessionLocal()
     try:
+        acquired = bool(
+            lock_connection.execute(
+                text("SELECT pg_try_advisory_lock(:key)"), {"key": lock_key}
+            ).scalar()
+        )
+        if not acquired:
+            return
         document = db.get(Document, document_id)
         if document is None or document.status in TERMINAL_STATUSES:
             return
@@ -89,6 +100,9 @@ def process_document(self, document_id: str) -> None:
         _handle_failure(self, db, document_id, exc)
     finally:
         db.close()
+        if acquired:
+            lock_connection.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": lock_key})
+        lock_connection.close()
 
 
 def _load_extraction_functions():
@@ -154,7 +168,9 @@ def _business_duplicate_candidates(db, document: Document) -> list[dict[str, str
     result = []
     for candidate in candidates:
         values = {
-            field.field_name: field.value
+            field.field_name: (
+                field.reviewed_value if field.reviewed_value is not None else field.value
+            )
             for field in db.query(ExtractedField)
             .filter(ExtractedField.document_id == candidate.id)
             .all()

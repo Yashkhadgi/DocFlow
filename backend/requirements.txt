@@ -1,5 +1,5 @@
 alembic==1.13.2
-anthropic==0.34.2
+anthropic==0.120.2
 boto3==1.34.162
 celery==5.4.0
 email-validator==2.2.0

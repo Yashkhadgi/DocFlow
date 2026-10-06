@@ -59,7 +59,7 @@ def get_final_field_value(fields_dict: dict[str, Any], field_name: str) -> str:
         return ""
     if isinstance(val, dict):
         reviewed = val.get("reviewed_value")
-        if reviewed is not None and str(reviewed).strip() != "":
+        if reviewed is not None:
             return str(reviewed).strip()
         raw_val = val.get("value")
         return str(raw_val).strip() if raw_val is not None else ""
@@ -167,24 +167,17 @@ def local_to_json(docs: list[dict[str, Any]]) -> str:
 
 def get_export_formatter(format_type: str) -> tuple[Callable[[list[dict[str, Any]]], str], str, str]:
     """
-    Single selection function for export formatter.
-    Prefers to_csv/to_json from app.extraction if importable, otherwise uses local fallback.
-    Returns (formatter_callable, content_type, file_extension).
+    Select the contract-preserving formatter and its response metadata.
+
+    B's exporter treats an explicitly cleared reviewed_value as absent, so the
+    local formatter remains in use until that contract mismatch is resolved.
     """
     fmt = format_type.lower().strip()
 
-    try:
-        from app.extraction.export import to_csv as ext_to_csv, to_json as ext_to_json
-        use_extraction = True
-    except ImportError:
-        use_extraction = False
-
     if fmt == "csv":
-        formatter = ext_to_csv if use_extraction else local_to_csv
-        return formatter, "text/csv; charset=utf-8", "csv"
+        return local_to_csv, "text/csv; charset=utf-8", "csv"
     elif fmt == "json":
-        formatter = ext_to_json if use_extraction else local_to_json
-        return formatter, "application/json", "json"
+        return local_to_json, "application/json", "json"
     else:
         raise ValueError(f"Unsupported format: {format_type}")
 

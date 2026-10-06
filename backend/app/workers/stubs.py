@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from pathlib import Path
+import re
 
 from app.config import settings
 
@@ -46,11 +48,12 @@ def stub_extract(
     low_confidence = digest % 3 == 0
     total_mismatch = digest % 5 == 0
     gstin_confidence = 0.62 if low_confidence else 0.92
+    vendor_name, invoice_number = _stub_business_identity(file_bytes, filename)
     return StubExtractionResult(
         document_type="invoice",
         fields={
-            "vendor_name": StubField("Acme Traders", 0.97),
-            "invoice_number": StubField("INV-001", 0.99),
+            "vendor_name": StubField(vendor_name, 0.97),
+            "invoice_number": StubField(invoice_number, 0.99),
             "invoice_date": StubField("2026-10-01", 0.95),
             "gstin": StubField("27ABCDE1234F1Z5", gstin_confidence),
             "currency": StubField("INR", 0.90),
@@ -62,3 +65,22 @@ def stub_extract(
             StubLineItem("Steel rods", "10", "1000.00", "10000.00", 0.95),
         ],
     )
+
+
+def _stub_business_identity(file_bytes: bytes, filename: str | None) -> tuple[str, str]:
+    """Return stable fake business fields without making every upload a duplicate."""
+    normalized_name = _normalize_filename(filename)
+    if normalized_name in {"clean_invoice", "clean_invoice_copy", "same_invoice_resaved"}:
+        return "Acme Traders", "INV-001"
+
+    digest_hex = sha256(file_bytes).hexdigest()
+    invoice_suffix = int(digest_hex[:8], 16) % 900_000 + 100_000
+    vendor_suffix = int(digest_hex[8:12], 16) % 100
+    return f"Demo Vendor {vendor_suffix:02d}", f"INV-{invoice_suffix}"
+
+
+def _normalize_filename(filename: str | None) -> str:
+    if not filename:
+        return ""
+    stem = Path(filename).stem.lower()
+    return re.sub(r"[^a-z0-9]+", "_", stem).strip("_")

@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
 
     s3_endpoint_url: str = "http://minio:9000"
+    s3_public_endpoint_url: str | None = None
     s3_region: str = "auto"
     s3_access_key: str = "minioadmin"
     s3_secret_key: str = "minioadmin"
@@ -43,7 +44,14 @@ class Settings(BaseSettings):
     max_files_per_upload: int = 20
 
     anthropic_api_key: str | None = None
-    llm_model: str = "claude-sonnet-5-5"
+    llm_model: str = "claude-haiku-4-5-20251001"
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-3.1-flash-lite"
+    gemini_fallback_enabled: bool = True
+    llm_budget_usd: float = Field(default=0.15, gt=0)
+    llm_max_input_tokens: int = Field(default=8000, ge=1)
+    llm_max_output_tokens: int = Field(default=1024, ge=1, le=4096)
+    llm_max_pdf_pages: int = Field(default=5, ge=1, le=100)
     confidence_threshold: float = 0.85
     use_stub_extractor: bool = True
 
