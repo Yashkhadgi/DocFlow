@@ -17,8 +17,11 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -53,8 +56,11 @@ services:
       context: ./backend
     env_file:
       - .env.example
+      - path: .env
+        required: false
     environment:
       RUN_MIGRATIONS: "true"
+      S3_PUBLIC_ENDPOINT_URL: http://localhost:9000
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
@@ -73,6 +79,8 @@ services:
       context: ./backend
     env_file:
       - .env.example
+      - path: .env
+        required: false
     command: celery -A app.workers.celery_app:celery_app worker --loglevel=info
     volumes:
       - ./backend:/app
@@ -90,7 +98,7 @@ services:
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     environment:
       VITE_API_BASE_URL: http://localhost:8000/api/v1
-      VITE_USE_MOCK: "true"
+      VITE_USE_MOCK: ${VITE_USE_MOCK:-false}
     volumes:
       - ./frontend:/app
     ports:
@@ -101,3 +109,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  redis_data:

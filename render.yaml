@@ -26,7 +26,7 @@ services:
       - key: S3_ENDPOINT_URL
         sync: false
       - key: S3_REGION
-        sync: false
+        value: auto
       - key: S3_ACCESS_KEY
         sync: false
       - key: S3_SECRET_KEY
@@ -34,17 +34,31 @@ services:
       - key: S3_BUCKET
         sync: false
       - key: PRESIGNED_URL_EXPIRES_SECONDS
-        sync: false
+        value: 300
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: GEMINI_FALLBACK_ENABLED
+        value: true
       - key: LLM_MODEL
-        sync: false
+        value: claude-haiku-4-5-20251001
+      - key: LLM_BUDGET_USD
+        value: 0.15
+      - key: LLM_MAX_INPUT_TOKENS
+        value: 8000
+      - key: LLM_MAX_OUTPUT_TOKENS
+        value: 1024
+      - key: LLM_MAX_PDF_PAGES
+        value: 5
       - key: CONFIDENCE_THRESHOLD
-        sync: false
+        value: 0.85
       - key: USE_STUB_EXTRACTOR
-        sync: false
+        value: false
       - key: JOB_MAX_ATTEMPTS
-        sync: false
+        value: 3
       - key: FORCE_FAIL_FILENAME_CONTAINS
         sync: false
       - key: FORCE_FAIL_UNTIL_ATTEMPT
@@ -74,7 +88,7 @@ services:
       - key: S3_ENDPOINT_URL
         sync: false
       - key: S3_REGION
-        sync: false
+        value: auto
       - key: S3_ACCESS_KEY
         sync: false
       - key: S3_SECRET_KEY
@@ -82,17 +96,31 @@ services:
       - key: S3_BUCKET
         sync: false
       - key: PRESIGNED_URL_EXPIRES_SECONDS
-        sync: false
+        value: 300
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: GEMINI_FALLBACK_ENABLED
+        value: true
       - key: LLM_MODEL
-        sync: false
+        value: claude-haiku-4-5-20251001
+      - key: LLM_BUDGET_USD
+        value: 0.15
+      - key: LLM_MAX_INPUT_TOKENS
+        value: 8000
+      - key: LLM_MAX_OUTPUT_TOKENS
+        value: 1024
+      - key: LLM_MAX_PDF_PAGES
+        value: 5
       - key: CONFIDENCE_THRESHOLD
-        sync: false
+        value: 0.85
       - key: USE_STUB_EXTRACTOR
-        sync: false
+        value: false
       - key: JOB_MAX_ATTEMPTS
-        sync: false
+        value: 3
       - key: FORCE_FAIL_FILENAME_CONTAINS
         sync: false
       - key: FORCE_FAIL_UNTIL_ATTEMPT
