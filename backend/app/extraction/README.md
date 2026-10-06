@@ -52,13 +52,16 @@ from app.extraction import (
 
 ## 3. Accuracy Benchmarks & Latency
 
-- **Overall Accuracy:** **95.3%** across sample dataset (100% on clean, scanned, photos, and flagged invoices).
+- **Overall Accuracy:** **90.6% to 95.3%** (58/64 to 61/64 fields matched across the 8 sample documents). Model output varies slightly between runs.
+  - **100.0%** across all 7 legible, clean, scanned, photographed, and flagged invoices.
+  - **All misses occurred exclusively on `blurry_invoice.png`** where heavy Gaussian blur made text unreadable, correctly assigning low confidence and safely routing to review.
 - **Confidence Calibration:**
-  - Average confidence on correct fields: **0.932**
-  - Average confidence on illegible/blurred fields: **0.000 - 0.110**
-  - **Zero instances of high-confidence hallucinations.**
-- **Average Processing Latency:** ~**3.5 to 6.0 seconds** per document.
-- **Operating Cost:** **~$1.19 per 100 invoices** (~$0.012 per invoice).
+  - Average confidence on correct fields: **0.90 to 0.93**
+  - Average confidence on unreadable/blurred fields: **0.17 to 0.24**
+  - **Zero instances of false high-confidence hallucinations.**
+- **Average Processing Latency:** **4.6 to 5.6 seconds** per document (measured live).
+- **Token Usage (Avg):** ~2,000 input tokens / ~450 output tokens per document.
+- **Operating Cost:** **$0.86 per 100 invoices** ($0.0086 per invoice based on Anthropic pricing for `claude-sonnet-5-5` at $2.00/1M input and $10.00/1M output tokens; source: https://www.anthropic.com/pricing, checked 2026-10-06).
 
 ---
 

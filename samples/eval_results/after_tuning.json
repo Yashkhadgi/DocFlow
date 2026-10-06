@@ -1,10 +1,14 @@
 {
-  "overall_accuracy_pct": 90.625,
+  "overall_accuracy_pct": 90.6,
   "total_correct": 58,
   "total_fields": 64,
+  "latency_avg_seconds": 5.57,
+  "tokens_avg_input": 2007,
+  "tokens_avg_output": 457,
+  "cost_per_100_invoices_usd": 1.29,
   "calibration": {
-    "avg_correct_confidence": 0.9322413793103448,
-    "avg_incorrect_confidence": 0.0
+    "avg_correct_confidence": 0.93,
+    "avg_incorrect_confidence": 0.175
   },
   "per_field_summary": {
     "vendor_name": {
@@ -51,7 +55,10 @@
   "samples": [
     {
       "filename": "bad_gstin.pdf",
-      "avg_confidence": 0.9400000000000001,
+      "latency_seconds": 6.24,
+      "input_tokens": 1647,
+      "output_tokens": 440,
+      "avg_confidence": 0.941,
       "matched_fields": 8,
       "total_fields": 8,
       "status": "PASS",
@@ -59,7 +66,7 @@
         "vendor_name": {
           "expected": "Delta Industrial Tools",
           "actual": "Delta Industrial Tools",
-          "confidence": 0.98,
+          "confidence": 0.99,
           "matched": true
         },
         "invoice_number": {
@@ -109,7 +116,10 @@
     },
     {
       "filename": "blurry_invoice.png",
-      "avg_confidence": 0.1125,
+      "latency_seconds": 10.24,
+      "input_tokens": 2570,
+      "output_tokens": 440,
+      "avg_confidence": 0.238,
       "matched_fields": 2,
       "total_fields": 8,
       "status": "2/8",
@@ -141,25 +151,25 @@
         "currency": {
           "expected": "INR",
           "actual": "INR",
-          "confidence": 0.5,
+          "confidence": 0.45,
           "matched": true
         },
         "subtotal": {
           "expected": "15000.00",
-          "actual": null,
-          "confidence": 0.0,
+          "actual": "18000.00",
+          "confidence": 0.35,
           "matched": false
         },
         "tax": {
           "expected": "2700.00",
-          "actual": null,
-          "confidence": 0.0,
+          "actual": "3240.00",
+          "confidence": 0.35,
           "matched": false
         },
         "total": {
           "expected": "17700.00",
-          "actual": null,
-          "confidence": 0.0,
+          "actual": "21240.00",
+          "confidence": 0.35,
           "matched": false
         }
       },
@@ -167,7 +177,10 @@
     },
     {
       "filename": "clean_invoice.pdf",
-      "avg_confidence": 0.9887500000000001,
+      "latency_seconds": 3.57,
+      "input_tokens": 1649,
+      "output_tokens": 485,
+      "avg_confidence": 0.988,
       "matched_fields": 8,
       "total_fields": 8,
       "status": "PASS",
@@ -193,7 +206,7 @@
         "gstin": {
           "expected": "27AABCA1234F1Z5",
           "actual": "27AABCA1234F1Z5",
-          "confidence": 0.99,
+          "confidence": 0.98,
           "matched": true
         },
         "currency": {
@@ -225,7 +238,10 @@
     },
     {
       "filename": "clean_invoice_copy.pdf",
-      "avg_confidence": 0.9900000000000001,
+      "latency_seconds": 3.3,
+      "input_tokens": 1649,
+      "output_tokens": 485,
+      "avg_confidence": 0.988,
       "matched_fields": 8,
       "total_fields": 8,
       "status": "PASS",
@@ -233,7 +249,7 @@
         "vendor_name": {
           "expected": "Apex Infotech Solutions Pvt Ltd",
           "actual": "Apex Infotech Solutions Pvt Ltd",
-          "confidence": 0.99,
+          "confidence": 0.98,
           "matched": true
         },
         "invoice_number": {
@@ -251,7 +267,7 @@
         "gstin": {
           "expected": "27AABCA1234F1Z5",
           "actual": "27AABCA1234F1Z5",
-          "confidence": 0.99,
+          "confidence": 0.98,
           "matched": true
         },
         "currency": {
@@ -283,7 +299,10 @@
     },
     {
       "filename": "photo_invoice.jpg",
-      "avg_confidence": 0.8775,
+      "latency_seconds": 11.06,
+      "input_tokens": 2687,
+      "output_tokens": 440,
+      "avg_confidence": 0.876,
       "matched_fields": 8,
       "total_fields": 8,
       "status": "PASS",
@@ -297,7 +316,7 @@
         "invoice_number": {
           "expected": "INV-2026-304",
           "actual": "INV-2026-304",
-          "confidence": 0.88,
+          "confidence": 0.87,
           "matched": true
         },
         "invoice_date": {
@@ -341,7 +360,10 @@
     },
     {
       "filename": "same_invoice_resaved.pdf",
-      "avg_confidence": 0.9887500000000001,
+      "latency_seconds": 3.31,
+      "input_tokens": 1652,
+      "output_tokens": 485,
+      "avg_confidence": 0.988,
       "matched_fields": 8,
       "total_fields": 8,
       "status": "PASS",
@@ -367,7 +389,7 @@
         "gstin": {
           "expected": "27AABCA1234F1Z5",
           "actual": "27AABCA1234F1Z5",
-          "confidence": 0.99,
+          "confidence": 0.98,
           "matched": true
         },
         "currency": {
@@ -399,7 +421,10 @@
     },
     {
       "filename": "scanned_invoice.pdf",
-      "avg_confidence": 0.875,
+      "latency_seconds": 3.75,
+      "input_tokens": 2555,
+      "output_tokens": 440,
+      "avg_confidence": 0.871,
       "matched_fields": 8,
       "total_fields": 8,
       "status": "PASS",
@@ -431,7 +456,7 @@
         "currency": {
           "expected": "INR",
           "actual": "INR",
-          "confidence": 0.95,
+          "confidence": 0.92,
           "matched": true
         },
         "subtotal": {
@@ -457,7 +482,10 @@
     },
     {
       "filename": "wrong_total.pdf",
-      "avg_confidence": 0.98625,
+      "latency_seconds": 3.05,
+      "input_tokens": 1647,
+      "output_tokens": 440,
+      "avg_confidence": 0.988,
       "matched_fields": 8,
       "total_fields": 8,
       "status": "PASS",
@@ -483,7 +511,7 @@
         "gstin": {
           "expected": "27AABCF7890K1Z4",
           "actual": "27AABCF7890K1Z4",
-          "confidence": 0.98,
+          "confidence": 0.99,
           "matched": true
         },
         "currency": {
