@@ -30,4 +30,3 @@ if settings.redis_url.startswith("rediss://"):
 
     celery_app.conf.broker_use_ssl = ssl_options
     celery_app.conf.redis_backend_use_ssl = ssl_options
-
