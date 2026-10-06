@@ -53,6 +53,8 @@ services:
       context: ./backend
     env_file:
       - .env.example
+    environment:
+      RUN_MIGRATIONS: "true"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
