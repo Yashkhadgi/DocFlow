@@ -1,0 +1,62 @@
+{
+  "document_type": "invoice",
+  "fields": {
+    "vendor_name": {
+      "value": "Bharat Heavy Logistics Ltd",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_number": {
+      "value": "INV-2026-882",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_date": {
+      "value": "2026-08-20",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "gstin": {
+      "value": "29AABCB5678G1Z2",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "currency": {
+      "value": "INR",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "subtotal": {
+      "value": "26500.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "tax": {
+      "value": "4770.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "total": {
+      "value": "31270.00",
+      "confidence": 0.98,
+      "bbox": null
+    }
+  },
+  "line_items": [
+    {
+      "description": "Freight Transport (Bangalore to Mumbai)",
+      "quantity": "2",
+      "rate": "12000.00",
+      "amount": "24000.00",
+      "confidence": 0.98
+    },
+    {
+      "description": "Loading and Unloading Charges",
+      "quantity": "1",
+      "rate": "2500.00",
+      "amount": "2500.00",
+      "confidence": 0.98
+    }
+  ],
+  "raw_model_output": null
+}

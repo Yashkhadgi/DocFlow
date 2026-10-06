@@ -1,0 +1,62 @@
+{
+  "document_type": "invoice",
+  "fields": {
+    "vendor_name": {
+      "value": "Krishna Stationery & Office Supplies",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_number": {
+      "value": "INV-2026-304",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_date": {
+      "value": "2026-07-10",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "gstin": {
+      "value": "07AABCD9012H1Z8",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "currency": {
+      "value": "INR",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "subtotal": {
+      "value": "6500.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "tax": {
+      "value": "1170.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "total": {
+      "value": "7670.00",
+      "confidence": 0.98,
+      "bbox": null
+    }
+  },
+  "line_items": [
+    {
+      "description": "A4 Paper Reams",
+      "quantity": "20",
+      "rate": "250.00",
+      "amount": "5000.00",
+      "confidence": 0.98
+    },
+    {
+      "description": "Whiteboard Markers Box",
+      "quantity": "5",
+      "rate": "300.00",
+      "amount": "1500.00",
+      "confidence": 0.98
+    }
+  ],
+  "raw_model_output": null
+}

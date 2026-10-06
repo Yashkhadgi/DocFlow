@@ -1,0 +1,62 @@
+{
+  "document_type": "invoice",
+  "fields": {
+    "vendor_name": {
+      "value": "Metro Hardware Supplies",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_number": {
+      "value": "INV-2026-550",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_date": {
+      "value": "2026-09-01",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "gstin": {
+      "value": "27AABCF7890K1Z4",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "currency": {
+      "value": "INR",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "subtotal": {
+      "value": "10000.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "tax": {
+      "value": "1800.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "total": {
+      "value": "11500.00",
+      "confidence": 0.98,
+      "bbox": null
+    }
+  },
+  "line_items": [
+    {
+      "description": "Industrial Power Drill",
+      "quantity": "2",
+      "rate": "4000.00",
+      "amount": "8000.00",
+      "confidence": 0.98
+    },
+    {
+      "description": "Drill Bit Set",
+      "quantity": "4",
+      "rate": "500.00",
+      "amount": "2000.00",
+      "confidence": 0.98
+    }
+  ],
+  "raw_model_output": null
+}
