@@ -172,7 +172,7 @@ export const DashboardPage: React.FC = () => {
                       {doc.invoice_number || '—'}
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-900">
-                      {doc.total ? `₹${doc.total}` : '—'}
+                      {formatMoney(doc.total, doc.currency)}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link to={`/documents/${doc.id}`}>
@@ -191,3 +191,31 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
+const KNOWN_CURRENCIES = new Set(['INR', 'USD', 'EUR', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'JPY']);
+
+function formatMoney(amount: string | null, currency: string | null): string {
+  if (amount === null || amount === undefined || amount === '') {
+    return currency ? `No amount (${currency.toUpperCase()})` : '—';
+  }
+
+  const numericAmount = Number(amount);
+  const normalizedCurrency = currency?.trim().toUpperCase() || null;
+  if (
+    normalizedCurrency &&
+    KNOWN_CURRENCIES.has(normalizedCurrency) &&
+    Number.isFinite(numericAmount)
+  ) {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: normalizedCurrency,
+      }).format(numericAmount);
+    } catch {
+      // Fall through to the explicit unknown display below.
+    }
+  }
+
+  const displayAmount = Number.isFinite(numericAmount) ? numericAmount.toFixed(2) : amount;
+  return `Unknown currency · ${displayAmount}`;
+}

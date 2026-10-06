@@ -136,6 +136,7 @@ class MockDatabase {
           auto_approved: false,
           vendor_name: 'Acme Traders',
           invoice_number: 'INV-001',
+          currency: 'INR',
           total: '11800.00',
           issues_count: 0,
           low_confidence_count: 0,
@@ -185,6 +186,7 @@ class MockDatabase {
         auto_approved: false,
         vendor_name: null,
         invoice_number: null,
+        currency: null,
         total: null,
         issues_count: 0,
         low_confidence_count: 0,
@@ -254,6 +256,7 @@ class MockDatabase {
             item.status = 'needs_review';
             item.vendor_name = 'Global Logistics Inc';
             item.invoice_number = 'INV-999';
+            item.currency = 'INR';
             item.total = '5400.00';
             item.issues_count = 1;
             item.low_confidence_count = 1;
@@ -471,6 +474,7 @@ class MockDatabase {
       item.total = totalStr;
       item.vendor_name = getEffectiveValue('vendor_name');
       item.invoice_number = getEffectiveValue('invoice_number');
+      item.currency = getEffectiveValue('currency');
       item.issues_count = detail.validation_issues.length;
       item.low_confidence_count = detail.fields.filter(
         (f) => f.needs_review

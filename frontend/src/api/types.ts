@@ -74,6 +74,7 @@ export interface DocumentListItem {
   auto_approved: boolean;
   vendor_name: string | null;
   invoice_number: string | null;
+  currency: string | null;
   total: string | null;
   issues_count: number;
   low_confidence_count: number;
