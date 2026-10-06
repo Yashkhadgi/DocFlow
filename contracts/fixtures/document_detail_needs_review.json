@@ -1,0 +1,103 @@
+{
+  "id": "33333333-3333-3333-3333-333333333333",
+  "filename": "wrong_total.pdf",
+  "mime_type": "application/pdf",
+  "status": "needs_review",
+  "auto_approved": false,
+  "duplicate_of_id": null,
+  "duplicate_reason": null,
+  "error_message": null,
+  "file_url": "https://storage.example.com/presigned/wrong_total.pdf",
+  "fields": [
+    {
+      "field_name": "vendor_name",
+      "value": "Acme Traders",
+      "reviewed_value": null,
+      "confidence": 0.97,
+      "needs_review": false,
+      "bbox": { "page": 1, "x": 0.1, "y": 0.05, "w": 0.3, "h": 0.04 }
+    },
+    {
+      "field_name": "invoice_number",
+      "value": "INV-002",
+      "reviewed_value": null,
+      "confidence": 0.98,
+      "needs_review": false,
+      "bbox": null
+    },
+    {
+      "field_name": "invoice_date",
+      "value": "2026-10-01",
+      "reviewed_value": null,
+      "confidence": 0.95,
+      "needs_review": false,
+      "bbox": null
+    },
+    {
+      "field_name": "gstin",
+      "value": "27ABCDE1234F1Z5",
+      "reviewed_value": null,
+      "confidence": 0.62,
+      "needs_review": true,
+      "bbox": null
+    },
+    {
+      "field_name": "currency",
+      "value": "INR",
+      "reviewed_value": null,
+      "confidence": 0.9,
+      "needs_review": false,
+      "bbox": null
+    },
+    {
+      "field_name": "subtotal",
+      "value": "10000.00",
+      "reviewed_value": null,
+      "confidence": 0.96,
+      "needs_review": false,
+      "bbox": null
+    },
+    {
+      "field_name": "tax",
+      "value": "1800.00",
+      "reviewed_value": null,
+      "confidence": 0.94,
+      "needs_review": false,
+      "bbox": null
+    },
+    {
+      "field_name": "total",
+      "value": "11500.00",
+      "reviewed_value": null,
+      "confidence": 0.97,
+      "needs_review": false,
+      "bbox": null
+    }
+  ],
+  "line_items": [
+    {
+      "position": 1,
+      "description": "Steel rods",
+      "quantity": "10.000",
+      "rate": "1000.00",
+      "amount": "10000.00",
+      "confidence": 0.95
+    }
+  ],
+  "validation_issues": [
+    {
+      "rule": "total_mismatch",
+      "severity": "error",
+      "field_name": "total",
+      "message": "subtotal (10000.00) + tax (1800.00) = 11800.00 but total is 11500.00"
+    }
+  ],
+  "job": {
+    "status": "succeeded",
+    "attempts": 1,
+    "max_attempts": 3,
+    "last_error": null
+  },
+  "created_at": "2026-10-06T10:05:00Z",
+  "updated_at": "2026-10-06T10:05:20Z"
+}

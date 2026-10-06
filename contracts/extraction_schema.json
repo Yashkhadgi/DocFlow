@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocFlow Invoice Extraction Result",
+  "type": "object",
+  "required": ["document_type", "fields", "line_items"],
+  "properties": {
+    "document_type": {
+      "const": "invoice"
+    },
+    "fields": {
+      "type": "object",
+      "required": [
+        "vendor_name",
+        "invoice_number",
+        "invoice_date",
+        "gstin",
+        "currency",
+        "subtotal",
+        "tax",
+        "total"
+      ],
+      "properties": {
+        "vendor_name": { "$ref": "#/$defs/field_value" },
+        "invoice_number": { "$ref": "#/$defs/field_value" },
+        "invoice_date": { "$ref": "#/$defs/field_value" },
+        "gstin": { "$ref": "#/$defs/field_value" },
+        "currency": { "$ref": "#/$defs/field_value" },
+        "subtotal": { "$ref": "#/$defs/field_value" },
+        "tax": { "$ref": "#/$defs/field_value" },
+        "total": { "$ref": "#/$defs/field_value" }
+      },
+      "additionalProperties": false
+    },
+    "line_items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/line_item" }
+    },
+    "raw_model_output": {
+      "type": ["string", "null"]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "bbox": {
+      "type": "object",
+      "required": ["page", "x", "y", "w", "h"],
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "w": { "type": "number", "minimum": 0, "maximum": 1 },
+        "h": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "field_value": {
+      "type": "object",
+      "required": ["value", "confidence", "bbox"],
+      "properties": {
+        "value": { "type": ["string", "null"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "bbox": { "anyOf": [{ "$ref": "#/$defs/bbox" }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "line_item": {
+      "type": "object",
+      "required": ["description", "quantity", "rate", "amount", "confidence"],
+      "properties": {
+        "description": { "type": ["string", "null"] },
+        "quantity": { "type": ["string", "null"] },
+        "rate": { "type": ["string", "null"] },
+        "amount": { "type": ["string", "null"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

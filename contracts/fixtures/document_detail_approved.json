@@ -1,0 +1,33 @@
+{
+  "id": "22222222-2222-2222-2222-222222222222",
+  "filename": "clean_invoice.pdf",
+  "mime_type": "application/pdf",
+  "status": "approved",
+  "auto_approved": true,
+  "duplicate_of_id": null,
+  "duplicate_reason": null,
+  "error_message": null,
+  "file_url": "https://storage.example.com/presigned/clean_invoice.pdf",
+  "fields": [
+    { "field_name": "vendor_name", "value": "Acme Traders", "reviewed_value": null, "confidence": 0.97, "needs_review": false, "bbox": null },
+    { "field_name": "invoice_number", "value": "INV-001", "reviewed_value": null, "confidence": 0.99, "needs_review": false, "bbox": null },
+    { "field_name": "invoice_date", "value": "2026-10-01", "reviewed_value": null, "confidence": 0.95, "needs_review": false, "bbox": null },
+    { "field_name": "gstin", "value": "27ABCDE1234F1Z5", "reviewed_value": null, "confidence": 0.92, "needs_review": false, "bbox": null },
+    { "field_name": "currency", "value": "INR", "reviewed_value": null, "confidence": 0.9, "needs_review": false, "bbox": null },
+    { "field_name": "subtotal", "value": "10000.00", "reviewed_value": null, "confidence": 0.96, "needs_review": false, "bbox": null },
+    { "field_name": "tax", "value": "1800.00", "reviewed_value": null, "confidence": 0.94, "needs_review": false, "bbox": null },
+    { "field_name": "total", "value": "11800.00", "reviewed_value": null, "confidence": 0.97, "needs_review": false, "bbox": null }
+  ],
+  "line_items": [
+    { "position": 1, "description": "Steel rods", "quantity": "10.000", "rate": "1000.00", "amount": "10000.00", "confidence": 0.95 }
+  ],
+  "validation_issues": [],
+  "job": {
+    "status": "succeeded",
+    "attempts": 1,
+    "max_attempts": 3,
+    "last_error": null
+  },
+  "created_at": "2026-10-06T10:00:00Z",
+  "updated_at": "2026-10-06T10:00:20Z"
+}

@@ -1,0 +1,10 @@
+{
+  "access_token": "mock.jwt.token",
+  "token_type": "bearer",
+  "expires_in": 86400,
+  "user": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "email": "demo@docflow.app",
+    "full_name": "Demo User"
+  }
+}
