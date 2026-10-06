@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -43,3 +44,12 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     user: UserResponse
+
+
+class PatchDocumentFieldsRequest(BaseModel):
+    fields: dict[str, Any] | None = None
+    line_items: list[dict[str, Any]] | None = None
+
+
+class ApproveDocumentRequest(BaseModel):
+    force: bool = False

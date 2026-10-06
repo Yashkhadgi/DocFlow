@@ -6,7 +6,6 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from pydantic import BaseModel
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -17,6 +16,7 @@ from app.db import get_db
 from app.extraction.types import ExtractionResult, FieldValue, LineItem as ExtractedLineItem
 from app.extraction.validators import validate
 from app.models import Document, ExtractedField, Job, LineItem, User, ValidationIssue
+from app.schemas import ApproveDocumentRequest, PatchDocumentFieldsRequest
 from app.services.storage import storage
 from app.workers.tasks import process_document
 
@@ -162,15 +162,10 @@ def get_document(
     return serialize_document_detail(db, document)
 
 
-class PatchFieldsRequest(BaseModel):
-    fields: dict[str, Any] | None = None
-    line_items: list[dict[str, Any]] | None = None
-
-
 @router.patch("/{document_id}/fields")
 def update_document_fields(
     document_id: UUID,
-    payload: PatchFieldsRequest,
+    payload: PatchDocumentFieldsRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
@@ -275,14 +270,10 @@ def update_document_fields(
     return serialize_document_detail(db, document)
 
 
-class ApproveRequest(BaseModel):
-    force: bool = False
-
-
 @router.post("/{document_id}/approve")
 def approve_document(
     document_id: UUID,
-    payload: ApproveRequest | None = None,
+    payload: ApproveDocumentRequest | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
