@@ -12,6 +12,11 @@ import {
   isMockMode,
   getAuthToken,
 } from '../api/client';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
+import { Button } from '../components/Button';
+import { Badge } from '../components/Badge';
+import { StatusBadge } from '../components/StatusBadge';
+import { useToast } from '../components/Toast';
 
 interface TestResult {
   name: string;
@@ -21,6 +26,7 @@ interface TestResult {
 }
 
 export const C1VerificationPage: React.FC = () => {
+  const toast = useToast();
   const [results, setResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -57,7 +63,7 @@ export const C1VerificationPage: React.FC = () => {
         addLog(
           '3. POST /auth/login & Token Store',
           !!authRes.access_token && storedToken === authRes.access_token,
-          `Access token retrieved and persisted in memory/localStorage (${authRes.user.email})`
+          `Access token retrieved and persisted (${authRes.user.email})`
         );
       } catch (err: any) {
         addLog('3. POST /auth/login', false, `Failed: ${err.message || 'Error'}`);
@@ -167,6 +173,8 @@ export const C1VerificationPage: React.FC = () => {
       } catch (err: any) {
         addLog('10. GET /export', false, `Failed: ${err.message || 'Error'}`);
       }
+
+      toast.success('Verification suite executed successfully!');
     } finally {
       setIsRunning(false);
     }
@@ -174,82 +182,105 @@ export const C1VerificationPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Task C1 Checklist & Verification</h1>
-          <p className="text-sm text-slate-400">
-            Automated verification suite testing all Section 5.3 endpoints, types, and mock layer simulation
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Design System & Task Verification
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Automated testing suite & shared design system component showcase
           </p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="lg"
+          isLoading={isRunning}
           onClick={runAllTests}
-          disabled={isRunning}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-50"
         >
-          {isRunning ? 'Running Verification...' : 'Execute C1 Verification Suite'}
-        </button>
+          Execute C1 Verification Suite
+        </Button>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-          Verification Requirements Matrix:
-        </h3>
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-300">
-          <li className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center space-x-2">
-            <span className="text-emerald-400 font-bold">&check;</span>
-            <span>Tailwind setup (@tailwindcss/vite v4 plugin)</span>
-          </li>
-          <li className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center space-x-2">
-            <span className="text-emerald-400 font-bold">&check;</span>
-            <span>React Router setup (BrowserRouter + pages)</span>
-          </li>
-          <li className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center space-x-2">
-            <span className="text-emerald-400 font-bold">&check;</span>
-            <span>TanStack Query setup (QueryClientProvider)</span>
-          </li>
-          <li className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center space-x-2">
-            <span className="text-emerald-400 font-bold">&check;</span>
-            <span>src/api/types.ts (Section 5.3 responses)</span>
-          </li>
-          <li className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center space-x-2">
-            <span className="text-emerald-400 font-bold">&check;</span>
-            <span>src/api/client.ts (One function per endpoint)</span>
-          </li>
-          <li className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center space-x-2">
-            <span className="text-emerald-400 font-bold">&check;</span>
-            <span>src/api/mock/ (Built from /contracts/fixtures)</span>
-          </li>
-        </ul>
-      </div>
-
-      {/* Results Log */}
-      {results.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Verification Execution Log ({results.filter((r) => r.passed).length}/{results.length} Passed)
-            </h3>
+      {/* Design System Showcase */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Design System Showcase</CardTitle>
+          <CardDescription>StatusBadges, Buttons, Badges, and Theme Tokens</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">
+              Status Badge Variants:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge status="queued" />
+              <StatusBadge status="processing" />
+              <StatusBadge status="needs_review" />
+              <StatusBadge status="approved" />
+              <StatusBadge status="failed" />
+              <StatusBadge status="duplicate" />
+            </div>
           </div>
 
-          <div className="space-y-3 font-mono text-xs">
+          <div>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">
+              Button Component Variants:
+            </span>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="primary">Primary Button</Button>
+              <Button variant="secondary">Secondary Button</Button>
+              <Button variant="danger">Danger Button</Button>
+              <Button variant="outline">Outline Button</Button>
+              <Button variant="ghost">Ghost Button</Button>
+            </div>
+          </div>
+
+          <div>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">
+              Badge Color Variants:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="indigo">Indigo</Badge>
+              <Badge variant="green" dot>Green Dot</Badge>
+              <Badge variant="amber" dot>Amber Dot</Badge>
+              <Badge variant="red" dot>Red Dot</Badge>
+              <Badge variant="purple" dot>Purple Dot</Badge>
+              <Badge variant="blue" dot>Blue Dot</Badge>
+              <Badge variant="gray">Gray</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Execution Results */}
+      {results.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Verification Execution Log ({results.filter((r) => r.passed).length}/{results.length} Passed)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {results.map((res, i) => (
               <div
                 key={i}
-                className={`p-3 rounded-lg border flex flex-col space-y-1 ${
+                className={`p-3.5 rounded-xl border flex flex-col space-y-1 font-mono text-xs ${
                   res.passed
-                    ? 'bg-emerald-950/30 border-emerald-800/80 text-emerald-300'
-                    : 'bg-rose-950/30 border-rose-800/80 text-rose-300'
+                    ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900'
+                    : 'bg-rose-50/60 border-rose-200 text-rose-900'
                 }`}
               >
                 <div className="flex items-center justify-between font-bold">
                   <span>{res.name}</span>
-                  <span>{res.passed ? 'PASS' : 'FAIL'}</span>
+                  <Badge variant={res.passed ? 'green' : 'red'}>
+                    {res.passed ? 'PASS' : 'FAIL'}
+                  </Badge>
                 </div>
-                <div className="text-[11px] text-slate-300">{res.message}</div>
+                <div className="text-[11px] text-slate-600 font-sans">{res.message}</div>
               </div>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

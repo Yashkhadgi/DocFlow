@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { isMockMode } from '../api/client';
+import { Badge } from './Badge';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -15,14 +16,14 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="bg-slate-900 border-b border-slate-800 text-slate-100 shadow-md">
+    <header className="bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-8">
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-sm shadow-indigo-600/30 group-hover:scale-105 transition-transform">
               DF
             </div>
-            <span className="font-extrabold text-xl tracking-tight text-white group-hover:text-indigo-300 transition-colors">
+            <span className="font-extrabold text-xl tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">
               DocFlow
             </span>
           </Link>
@@ -34,10 +35,10 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
                     isActive
-                      ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-indigo-50 text-indigo-700 font-bold'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   {link.label}
@@ -48,22 +49,20 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800 text-xs">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                mockActive ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
-              }`}
-            />
-            <span className="text-slate-300 font-mono">
-              VITE_USE_MOCK: <strong className={mockActive ? 'text-amber-400' : 'text-emerald-400'}>{mockActive ? 'true' : 'false'}</strong>
-            </span>
-          </div>
+          <Badge
+            variant={mockActive ? 'amber' : 'green'}
+            dot
+            size="md"
+            className="font-mono"
+          >
+            VITE_USE_MOCK: <strong>{mockActive ? 'true' : 'false'}</strong>
+          </Badge>
 
           <Link
             to="/login"
-            className="text-xs font-semibold text-slate-400 hover:text-white px-3 py-1.5 rounded-md hover:bg-slate-800 transition-colors"
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors border border-slate-200/60"
           >
-            Login / Auth
+            Sign In
           </Link>
         </div>
       </div>

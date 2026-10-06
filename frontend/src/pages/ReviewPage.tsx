@@ -8,10 +8,18 @@ import {
   retryDocument,
 } from '../api/client';
 import type { LineItem } from '../api/types';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
+import { Button } from '../components/Button';
+import { StatusBadge } from '../components/StatusBadge';
+import { Badge } from '../components/Badge';
+import { Input } from '../components/Input';
+import { Skeleton } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
 
 export const ReviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const { data: doc, isLoading, isError, error } = useQuery({
     queryKey: ['document', id],
@@ -21,7 +29,6 @@ export const ReviewPage: React.FC = () => {
 
   const [fieldEdits, setFieldEdits] = useState<Record<string, string>>({});
   const [lineItemsEdits, setLineItemsEdits] = useState<LineItem[]>([]);
-  const [actionMsg, setActionMsg] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
     if (doc) {
@@ -43,13 +50,10 @@ export const ReviewPage: React.FC = () => {
     onSuccess: (updated) => {
       queryClient.setQueryData(['document', id], updated);
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      setActionMsg({ type: 'success', msg: 'Fields updated and revalidated!' });
+      toast.success('Fields updated and revalidated successfully!');
     },
     onError: (err: any) => {
-      setActionMsg({
-        type: 'error',
-        msg: err?.error?.message || err?.message || 'Failed to update fields',
-      });
+      toast.error(err?.error?.message || err?.message || 'Failed to update fields');
     },
   });
 
@@ -58,13 +62,10 @@ export const ReviewPage: React.FC = () => {
     onSuccess: (updated) => {
       queryClient.setQueryData(['document', id], updated);
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      setActionMsg({ type: 'success', msg: 'Document approved successfully!' });
+      toast.success('Document approved successfully!');
     },
     onError: (err: any) => {
-      setActionMsg({
-        type: 'error',
-        msg: err?.error?.message || err?.message || 'Failed to approve document',
-      });
+      toast.error(err?.error?.message || err?.message || 'Failed to approve document');
     },
   });
 
@@ -73,22 +74,34 @@ export const ReviewPage: React.FC = () => {
     onSuccess: (updated) => {
       queryClient.setQueryData(['document', id], updated);
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      setActionMsg({ type: 'success', msg: 'Document re-queued for extraction!' });
+      toast.success('Document re-queued for extraction!');
     },
     onError: (err: any) => {
-      setActionMsg({
-        type: 'error',
-        msg: err?.error?.message || err?.message || 'Failed to retry document',
-      });
+      toast.error(err?.error?.message || err?.message || 'Failed to retry document');
     },
   });
 
-  if (isLoading) return <div className="p-12 text-center text-slate-400">Loading document...</div>;
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <Skeleton variant="card" count={2} />
+      </div>
+    );
+  }
+
   if (isError || !doc) {
     return (
-      <div className="p-12 text-center text-rose-400 space-y-4">
-        <div>Error: {(error as any)?.error?.message || 'Document not found'}</div>
-        <Link to="/" className="text-xs text-indigo-400 underline">Back to Dashboard</Link>
+      <div className="max-w-md mx-auto text-center my-12">
+        <Card className="p-8 space-y-4">
+          <div className="text-rose-600 font-bold">
+            Error: {(error as any)?.error?.message || 'Document not found'}
+          </div>
+          <Link to="/">
+            <Button variant="secondary" size="sm">
+              &larr; Back to Dashboard
+            </Button>
+          </Link>
+        </Card>
       </div>
     );
   }
@@ -97,181 +110,183 @@ export const ReviewPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-extrabold text-white font-mono">{doc.filename}</h1>
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-950 text-amber-400 border border-amber-800">
-              {doc.status}
-            </span>
+            <h1 className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
+              {doc.filename}
+            </h1>
+            <StatusBadge status={doc.status} />
           </div>
-          <p className="text-xs text-slate-400 mt-1">ID: {doc.id}</p>
+          <p className="text-xs text-slate-500 font-mono mt-1">ID: {doc.id}</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Link
-            to="/"
-            className="px-3 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-          >
+        <Link to="/">
+          <Button variant="secondary" size="sm">
             &larr; Back to Dashboard
-          </Link>
-        </div>
+          </Button>
+        </Link>
       </div>
-
-      {actionMsg && (
-        <div
-          className={`p-3 rounded-lg border text-xs ${
-            actionMsg.type === 'success'
-              ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300'
-              : 'bg-rose-950/80 border-rose-800 text-rose-300'
-          }`}
-        >
-          {actionMsg.msg}
-        </div>
-      )}
 
       {/* Validation Issues Banner */}
       {doc.validation_issues.length > 0 && (
-        <div className="bg-slate-900 border border-amber-800/80 rounded-xl p-4 space-y-2">
-          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+        <Card className="border-amber-200 bg-amber-50/40 p-4 space-y-2">
+          <span className="text-xs font-bold text-amber-800 uppercase tracking-wider block">
             Validation Issues ({doc.validation_issues.length})
           </span>
-          <ul className="space-y-1 text-xs">
+          <ul className="space-y-1.5 text-xs">
             {doc.validation_issues.map((issue, idx) => (
               <li
                 key={idx}
-                className={`p-2 rounded border flex items-center justify-between ${
+                className={`p-2.5 rounded-lg border flex items-center justify-between font-medium ${
                   issue.severity === 'error'
-                    ? 'bg-rose-950/50 border-rose-800/80 text-rose-300'
-                    : 'bg-amber-950/50 border-amber-800/80 text-amber-300'
+                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    : 'bg-amber-100/60 border-amber-200 text-amber-800'
                 }`}
               >
                 <span>
                   <strong>[{issue.rule}]</strong> {issue.message}
                 </span>
-                <span className="text-[10px] uppercase px-1.5 py-0.5 rounded font-bold border border-current">
-                  {issue.severity}
-                </span>
+                <Badge variant={issue.severity === 'error' ? 'red' : 'amber'} size="sm">
+                  {issue.severity.toUpperCase()}
+                </Badge>
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       )}
 
-      {/* Split screen simulation layout */}
+      {/* Split screen layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left column: Document Preview */}
-        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col justify-between min-h-[400px]">
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Document Preview</h3>
-            <div className="bg-slate-950 border border-slate-800 rounded-lg p-8 text-center space-y-3">
-              <div className="w-16 h-20 mx-auto bg-slate-800 border border-slate-700 rounded flex items-center justify-center font-mono text-xs text-slate-400">
-                PDF
+        {/* Left Column: Document Preview */}
+        <div className="lg:col-span-5 space-y-4">
+          <Card className="p-6 flex flex-col justify-between min-h-[420px]">
+            <div className="space-y-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                Document Preview
+              </span>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center space-y-3">
+                <div className="w-16 h-20 mx-auto bg-white border border-slate-300 rounded shadow-xs flex items-center justify-center font-mono text-xs font-bold text-slate-600">
+                  PDF
+                </div>
+                <p className="text-xs font-mono font-semibold text-slate-800">{doc.filename}</p>
+                <p className="text-[11px] text-slate-500">
+                  MIME: {doc.mime_type} &bull; URL: {doc.file_url ? 'Presigned URL Active' : 'None'}
+                </p>
               </div>
-              <p className="text-xs font-mono text-slate-300">{doc.filename}</p>
-              <p className="text-[11px] text-slate-500">
-                MIME: {doc.mime_type} &bull; URL: {doc.file_url ? 'Presigned active' : 'None'}
-              </p>
-            </div>
-          </div>
-          {doc.status === 'failed' && (
-            <div className="pt-4 border-t border-slate-800 space-y-2">
-              <p className="text-xs text-rose-400">Failure message: {doc.error_message}</p>
-              <button
-                onClick={() => retryMutation.mutate()}
-                disabled={retryMutation.isPending}
-                className="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-all"
-              >
-                {retryMutation.isPending ? 'Re-queueing...' : 'Retry Processing'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right column: Extracted Fields & Line Items Form */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Extracted Fields & Verification
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {doc.fields.map((field) => {
-                const isNeedsReview = field.needs_review;
-                const hasIssue = doc.validation_issues.some((i) => i.field_name === field.field_name);
-
-                return (
-                  <div
-                    key={field.field_name}
-                    className={`p-3 rounded-lg border transition-all ${
-                      hasIssue
-                        ? 'bg-rose-950/20 border-rose-600/60'
-                        : isNeedsReview
-                        ? 'bg-amber-950/20 border-amber-500/60'
-                        : 'bg-slate-950 border-slate-800'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center mb-1 text-xs">
-                      <label className="font-semibold text-slate-300 capitalize">
-                        {field.field_name.replace('_', ' ')}
-                      </label>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                          field.confidence >= 0.85
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                            : 'bg-amber-950 text-amber-400 border border-amber-800 font-bold'
-                        }`}
-                      >
-                        {(field.confidence * 100).toFixed(0)}% confidence
-                      </span>
-                    </div>
-
-                    <input
-                      type="text"
-                      disabled={doc.status !== 'needs_review'}
-                      value={fieldEdits[field.field_name] ?? ''}
-                      onChange={(e) =>
-                        setFieldEdits({
-                          ...fieldEdits,
-                          [field.field_name]: e.target.value,
-                        })
-                      }
-                      className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono disabled:opacity-60"
-                    />
-                  </div>
-                );
-              })}
             </div>
 
-            {/* Action Buttons */}
-            {doc.status === 'needs_review' && (
-              <div className="pt-4 border-t border-slate-800 flex flex-wrap gap-3">
-                <button
-                  onClick={() => updateMutation.mutate()}
-                  disabled={updateMutation.isPending}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition-all"
+            {doc.status === 'failed' && (
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <p className="text-xs text-rose-600 font-semibold">
+                  Error: {doc.error_message}
+                </p>
+                <Button
+                  variant="danger"
+                  size="md"
+                  fullWidth
+                  isLoading={retryMutation.isPending}
+                  onClick={() => retryMutation.mutate()}
                 >
-                  {updateMutation.isPending ? 'Saving...' : 'Save & Revalidate'}
-                </button>
-
-                <button
-                  onClick={() => approveMutation.mutate(false)}
-                  disabled={approveMutation.isPending}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg transition-all"
-                >
-                  {approveMutation.isPending ? 'Approving...' : 'Approve'}
-                </button>
-
-                {blockingErrors.length > 0 && (
-                  <button
-                    onClick={() => approveMutation.mutate(true)}
-                    disabled={approveMutation.isPending}
-                    className="px-3 py-2 bg-slate-800 hover:bg-amber-900/60 text-amber-300 font-semibold text-xs rounded-lg transition-all border border-amber-800/80"
-                  >
-                    Force Approve
-                  </button>
-                )}
+                  Retry Processing
+                </Button>
               </div>
             )}
-          </div>
+          </Card>
+        </div>
+
+        {/* Right Column: Extracted Fields & Line Items Form */}
+        <div className="lg:col-span-7 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Extracted Fields & Verification</CardTitle>
+              <CardDescription>
+                Review extracted values. Yellow highlighted fields require review.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {doc.fields.map((field) => {
+                  const isNeedsReview = field.needs_review;
+                  const hasIssue = doc.validation_issues.some(
+                    (i) => i.field_name === field.field_name
+                  );
+
+                  return (
+                    <div
+                      key={field.field_name}
+                      className={`p-3.5 rounded-xl border transition-all ${
+                        hasIssue
+                          ? 'bg-rose-50/50 border-rose-300 ring-2 ring-rose-500/10'
+                          : isNeedsReview
+                          ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-500/10'
+                          : 'bg-white border-slate-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-xs font-semibold text-slate-700 capitalize">
+                          {field.field_name.replace('_', ' ')}
+                        </span>
+                        <Badge
+                          variant={field.confidence >= 0.85 ? 'green' : 'amber'}
+                          size="sm"
+                        >
+                          {(field.confidence * 100).toFixed(0)}%
+                        </Badge>
+                      </div>
+
+                      <Input
+                        disabled={doc.status !== 'needs_review'}
+                        value={fieldEdits[field.field_name] ?? ''}
+                        onChange={(e) =>
+                          setFieldEdits({
+                            ...fieldEdits,
+                            [field.field_name]: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Action Buttons */}
+              {doc.status === 'needs_review' && (
+                <div className="pt-4 border-t border-slate-100 flex flex-wrap gap-3">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    isLoading={updateMutation.isPending}
+                    onClick={() => updateMutation.mutate()}
+                  >
+                    Save & Revalidate
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    className="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                    isLoading={approveMutation.isPending}
+                    onClick={() => approveMutation.mutate(false)}
+                  >
+                    Approve
+                  </Button>
+
+                  {blockingErrors.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="md"
+                      className="text-amber-700 hover:bg-amber-50 border-amber-300"
+                      isLoading={approveMutation.isPending}
+                      onClick={() => approveMutation.mutate(true)}
+                    >
+                      Force Approve
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
