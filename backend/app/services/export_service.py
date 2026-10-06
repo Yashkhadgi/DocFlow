@@ -3,7 +3,9 @@ from __future__ import annotations
 import csv
 import io
 import json
-from typing import Any
+from typing import Any, Callable
+
+from app.models import Document
 
 CSV_HEADERS = [
     "document_id",
@@ -35,25 +37,11 @@ HEADER_FIELD_NAMES = [
 ]
 
 
-def _get_final_field_value(fields_dict: dict[str, Any], field_name: str) -> str:
-    """Extract final string value from field dictionary or raw value."""
-    if not isinstance(fields_dict, dict):
-        return ""
-    val = fields_dict.get(field_name)
-    if val is None:
-        return ""
-    if isinstance(val, dict):
-        # Support dict format with reviewed_value / value
-        reviewed = val.get("reviewed_value")
-        if reviewed is not None and str(reviewed).strip() != "":
-            return str(reviewed).strip()
-        raw_val = val.get("value")
-        return str(raw_val).strip() if raw_val is not None else ""
-    return str(val).strip()
-
-
 def sanitize_csv_cell(value: Any) -> str:
-    """Protect against CSV formula injection (prefix with ' if starts with =, +, -, @)."""
+    """
+    Protect against CSV formula injection.
+    Prefix with single quote if cell starts with =, +, -, or @.
+    """
     if value is None:
         return ""
     val_str = str(value)
@@ -62,17 +50,30 @@ def sanitize_csv_cell(value: Any) -> str:
     return val_str
 
 
-def to_csv(docs: list[dict[str, Any]]) -> str:
+def get_final_field_value(fields_dict: dict[str, Any], field_name: str) -> str:
+    """Extract final string value from field dictionary (reviewed_value if not null else value)."""
+    if not isinstance(fields_dict, dict):
+        return ""
+    val = fields_dict.get(field_name)
+    if val is None:
+        return ""
+    if isinstance(val, dict):
+        reviewed = val.get("reviewed_value")
+        if reviewed is not None and str(reviewed).strip() != "":
+            return str(reviewed).strip()
+        raw_val = val.get("value")
+        return str(raw_val).strip() if raw_val is not None else ""
+    return str(val).strip()
+
+
+def local_to_csv(docs: list[dict[str, Any]]) -> str:
     """
-    Export documents to CSV string matching Section 5.3 contract.
-    One row per line item. Invoices with no line items yield one row with empty item columns.
-    Uses standard CSV quoting for commas, quotes, and newlines.
-    Protects against CSV injection by prefixing cells starting with =, +, -, @ with a single quote.
+    Local fallback for exporting documents to CSV format.
+    One row per line item; one row with empty item columns when no line items.
+    Uses standard CSV quoting and CSV formula injection protection.
     """
     output = io.StringIO()
     writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL, lineterminator="\r\n")
-
-    # Write header
     writer.writerow(CSV_HEADERS)
 
     for doc in docs:
@@ -81,13 +82,12 @@ def to_csv(docs: list[dict[str, Any]]) -> str:
         fields = doc.get("fields") or {}
 
         field_vals = [
-            sanitize_csv_cell(_get_final_field_value(fields, fn))
+            sanitize_csv_cell(get_final_field_value(fields, fn))
             for fn in HEADER_FIELD_NAMES
         ]
 
         line_items = doc.get("line_items") or []
         if not line_items:
-            # Single row with empty line item values
             row = [doc_id, filename] + field_vals + ["", "", "", "", ""]
             writer.writerow(row)
         else:
@@ -120,11 +120,10 @@ def to_csv(docs: list[dict[str, Any]]) -> str:
     return output.getvalue()
 
 
-
-def to_json(docs: list[dict[str, Any]]) -> str:
+def local_to_json(docs: list[dict[str, Any]]) -> str:
     """
-    Export documents to JSON string matching Section 5.3 contract.
-    Array of { document_id, filename, fields: {...}, line_items: [...] }.
+    Local fallback for exporting documents to JSON format.
+    Array of { document_id, filename, fields: {final values}, line_items: [...] }.
     """
     cleaned_docs = []
     for doc in docs:
@@ -133,7 +132,7 @@ def to_json(docs: list[dict[str, Any]]) -> str:
         raw_fields = doc.get("fields") or {}
 
         cleaned_fields = {
-            fn: _get_final_field_value(raw_fields, fn) or None
+            fn: get_final_field_value(raw_fields, fn) or None
             for fn in HEADER_FIELD_NAMES
         }
 
@@ -164,3 +163,58 @@ def to_json(docs: list[dict[str, Any]]) -> str:
         })
 
     return json.dumps(cleaned_docs, indent=2)
+
+
+def get_export_formatter(format_type: str) -> tuple[Callable[[list[dict[str, Any]]], str], str, str]:
+    """
+    Single selection function for export formatter.
+    Prefers to_csv/to_json from app.extraction if importable, otherwise uses local fallback.
+    Returns (formatter_callable, content_type, file_extension).
+    """
+    fmt = format_type.lower().strip()
+
+    try:
+        from app.extraction.export import to_csv as ext_to_csv, to_json as ext_to_json
+        use_extraction = True
+    except ImportError:
+        use_extraction = False
+
+    if fmt == "csv":
+        formatter = ext_to_csv if use_extraction else local_to_csv
+        return formatter, "text/csv; charset=utf-8", "csv"
+    elif fmt == "json":
+        formatter = ext_to_json if use_extraction else local_to_json
+        return formatter, "application/json", "json"
+    else:
+        raise ValueError(f"Unsupported format: {format_type}")
+
+
+def build_export_payload(documents: list[Document]) -> list[dict[str, Any]]:
+    """Build the list of document dicts from database models for export formatting."""
+    docs_data: list[dict[str, Any]] = []
+    for doc in documents:
+        fields_dict: dict[str, dict[str, Any]] = {}
+        for f in doc.fields:
+            fields_dict[f.field_name] = {
+                "value": f.value,
+                "reviewed_value": f.reviewed_value,
+            }
+
+        line_items_data: list[dict[str, Any]] = []
+        for li in sorted(doc.line_items, key=lambda item: item.position):
+            line_items_data.append({
+                "position": li.position,
+                "description": li.description,
+                "quantity": str(li.quantity) if li.quantity is not None else None,
+                "rate": str(li.rate) if li.rate is not None else None,
+                "amount": str(li.amount) if li.amount is not None else None,
+            })
+
+        docs_data.append({
+            "document_id": str(doc.id),
+            "filename": doc.filename,
+            "fields": fields_dict,
+            "line_items": line_items_data,
+        })
+
+    return docs_data

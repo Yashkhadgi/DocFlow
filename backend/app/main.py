@@ -1,14 +1,23 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.config import settings
-from app.routers import auth, documents
+from app.config import log_missing_env_vars, settings
+from app.routers import auth, documents, export
 
 
-app = FastAPI(title="DocFlow API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    log_missing_env_vars()
+    yield
+
+
+app = FastAPI(title="DocFlow API", version="0.1.0", lifespan=lifespan)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,6 +29,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(documents.router, prefix="/api/v1")
+app.include_router(export.router, prefix="/api/v1")
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -75,3 +85,9 @@ def health() -> dict[str, str]:
 @app.get("/health")
 def root_health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.port)
