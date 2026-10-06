@@ -1,0 +1,62 @@
+{
+  "document_type": "invoice",
+  "fields": {
+    "vendor_name": {
+      "value": "Sunrise Electricals Pvt Ltd",
+      "confidence": 0.6,
+      "bbox": null
+    },
+    "invoice_number": {
+      "value": "INV-2026-119",
+      "confidence": 0.6,
+      "bbox": null
+    },
+    "invoice_date": {
+      "value": "2026-06-05",
+      "confidence": 0.6,
+      "bbox": null
+    },
+    "gstin": {
+      "value": "33AABCE3456J1Z1",
+      "confidence": 0.6,
+      "bbox": null
+    },
+    "currency": {
+      "value": "INR",
+      "confidence": 0.6,
+      "bbox": null
+    },
+    "subtotal": {
+      "value": "15000.00",
+      "confidence": 0.6,
+      "bbox": null
+    },
+    "tax": {
+      "value": "2700.00",
+      "confidence": 0.6,
+      "bbox": null
+    },
+    "total": {
+      "value": "17700.00",
+      "confidence": 0.6,
+      "bbox": null
+    }
+  },
+  "line_items": [
+    {
+      "description": "LED Tube Lights 20W",
+      "quantity": "50",
+      "rate": "180.00",
+      "amount": "9000.00",
+      "confidence": 0.6
+    },
+    {
+      "description": "Copper Wiring Roll",
+      "quantity": "2",
+      "rate": "3000.00",
+      "amount": "6000.00",
+      "confidence": 0.6
+    }
+  ],
+  "raw_model_output": null
+}

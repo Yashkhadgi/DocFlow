@@ -1,0 +1,55 @@
+{
+  "document_type": "invoice",
+  "fields": {
+    "vendor_name": {
+      "value": "Faulty Test Services Pvt Ltd",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_number": {
+      "value": "INV-FAIL-001",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "invoice_date": {
+      "value": "2026-09-20",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "gstin": {
+      "value": "06AABCT9999Z1Z9",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "currency": {
+      "value": "INR",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "subtotal": {
+      "value": "1000.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "tax": {
+      "value": "180.00",
+      "confidence": 0.98,
+      "bbox": null
+    },
+    "total": {
+      "value": "1180.00",
+      "confidence": 0.98,
+      "bbox": null
+    }
+  },
+  "line_items": [
+    {
+      "description": "Diagnostics Testing",
+      "quantity": "1",
+      "rate": "1000.00",
+      "amount": "1000.00",
+      "confidence": 0.98
+    }
+  ],
+  "raw_model_output": null
+}
