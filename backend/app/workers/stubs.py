@@ -34,10 +34,13 @@ def stub_extract(
     file_bytes: bytes,
     mime_type: str,
     filename: str | None = None,
+    attempt: int | None = None,
 ) -> StubExtractionResult:
     failure_marker = settings.force_fail_filename_contains
     if failure_marker and filename and failure_marker in filename:
-        raise RuntimeError(f"Stub extraction forced to fail for {filename}")
+        failure_limit = settings.force_fail_until_attempt
+        if failure_limit <= 0 or attempt is None or attempt <= failure_limit:
+            raise RuntimeError(f"Stub extraction forced to fail for {filename}")
 
     digest = int(sha256(file_bytes).hexdigest(), 16)
     low_confidence = digest % 3 == 0

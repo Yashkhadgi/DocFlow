@@ -32,6 +32,7 @@ class Settings(BaseSettings):
 
     job_max_attempts: int = 3
     force_fail_filename_contains: str | None = Field(default="failme")
+    force_fail_until_attempt: int = 0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

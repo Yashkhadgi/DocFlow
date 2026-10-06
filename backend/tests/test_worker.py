@@ -184,8 +184,10 @@ def test_worker_extraction_exception_marks_job_failed(client, db, monkeypatch) -
         lambda result, threshold=None: [],
         lambda result, existing: None,
     ))
+    monkeypatch.setattr(task_module.process_document, "retry", lambda **_kwargs: None)
 
-    run_task(db, monkeypatch, document.id)
+    for _ in range(task_module.settings.job_max_attempts):
+        run_task(db, monkeypatch, document.id)
 
     job = db.query(Job).filter(Job.document_id == document.id).one()
     assert document.status == "failed"
