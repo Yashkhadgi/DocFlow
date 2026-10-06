@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from celery.exceptions import Retry
+
 from app.auth.security import create_access_token, hash_password
 from app.config import settings
 from app.models import Document, ExtractedField, Job, User
@@ -16,7 +18,7 @@ def _patch_retry(monkeypatch):
 
     def fake_retry(*, countdown: int, exc=None, max_retries=None):
         countdowns.append(countdown)
-        return None
+        return Retry("retry scheduled")
 
     monkeypatch.setattr(task_module.process_document, "retry", fake_retry)
     return countdowns
@@ -25,7 +27,10 @@ def _patch_retry(monkeypatch):
 def _run_with_storage(db, monkeypatch, document_id, file_bytes=PDF_BYTES):
     document = db.get(Document, document_id)
     monkeypatch.setattr(task_module, "storage", FakeStorage({document.storage_key: file_bytes}))
-    task_module.process_document.run(str(document_id))
+    try:
+        task_module.process_document.run(str(document_id))
+    except Retry:
+        pass
     db.expire_all()
 
 

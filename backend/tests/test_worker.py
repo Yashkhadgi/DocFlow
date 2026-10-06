@@ -5,6 +5,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from celery.exceptions import Retry
 
 from app.auth.security import hash_password
 from app.extraction.types import ExtractionResult, FieldValue
@@ -68,7 +69,10 @@ def create_document(db, *, email: str = "worker@example.test", filename: str = "
 def run_task(db, monkeypatch, document_id: str, file_bytes: bytes = PDF_BYTES) -> None:
     document = db.get(Document, document_id)
     monkeypatch.setattr(task_module, "storage", FakeStorage({document.storage_key: file_bytes}))
-    task_module.process_document.run(str(document_id))
+    try:
+        task_module.process_document.run(str(document_id))
+    except Retry:
+        pass
     db.expire_all()
 
 
@@ -184,7 +188,11 @@ def test_worker_extraction_exception_marks_job_failed(client, db, monkeypatch) -
         lambda result, threshold=None: [],
         lambda result, existing: None,
     ))
-    monkeypatch.setattr(task_module.process_document, "retry", lambda **_kwargs: None)
+    monkeypatch.setattr(
+        task_module.process_document,
+        "retry",
+        lambda **_kwargs: Retry("retry scheduled"),
+    )
 
     for _ in range(task_module.settings.job_max_attempts):
         run_task(db, monkeypatch, document.id)
@@ -194,7 +202,7 @@ def test_worker_extraction_exception_marks_job_failed(client, db, monkeypatch) -
     assert document.error_message == "extractor unavailable"
     assert job.status == "failed"
     assert job.last_error == "extractor unavailable"
-    assert job.attempts == 1
+    assert job.attempts == task_module.settings.job_max_attempts
 
 
 def test_business_duplicate_stores_extraction_and_points_to_original(client, db, monkeypatch) -> None:

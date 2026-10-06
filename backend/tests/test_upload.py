@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
-from app.models import Document, Job
+from app.models import Document, Job, User
 
 PDF_BYTES = b"%PDF-1.7\n%test pdf\n"
 JPEG_BYTES = b"\xff\xd8\xff\xe0jpeg-data"
@@ -67,7 +67,8 @@ def patch_upload_dependencies(monkeypatch):
 
 def test_valid_pdf_jpg_png_uploads_are_queued(client, db: Session, monkeypatch) -> None:
     fake_storage = patch_upload_dependencies(monkeypatch)
-    _, token = register_and_login(client)
+    email, token = register_and_login(client)
+    user_id = db.query(User.id).filter(User.email == email).scalar()
 
     response = upload_files(
         client,
@@ -87,13 +88,14 @@ def test_valid_pdf_jpg_png_uploads_are_queued(client, db: Session, monkeypatch) 
         "image/jpeg",
         "image/png",
     ]
-    assert db.query(Document).filter(Document.status == "queued").count() == 3
-    assert db.query(Job).filter(Job.status == "queued").count() == 3
+    assert db.query(Document).filter(Document.user_id == user_id, Document.status == "queued").count() == 3
+    assert db.query(Job).join(Document).filter(Document.user_id == user_id, Job.status == "queued").count() == 3
 
 
 def test_exact_duplicate_is_recorded_without_storage_or_job(client, db: Session, monkeypatch) -> None:
     fake_storage = patch_upload_dependencies(monkeypatch)
-    _, token = register_and_login(client)
+    email, token = register_and_login(client)
+    user_id = db.query(User.id).filter(User.email == email).scalar()
 
     first = upload_files(client, token, [("invoice.pdf", PDF_BYTES, "application/pdf")])
     second = upload_files(client, token, [("invoice-copy.pdf", PDF_BYTES, "application/pdf")])
@@ -103,9 +105,9 @@ def test_exact_duplicate_is_recorded_without_storage_or_job(client, db: Session,
     assert duplicate["status"] == "duplicate"
     assert duplicate["duplicate_of_id"] == original_id
     assert len(fake_storage.puts) == 1
-    assert db.query(Document).filter(Document.status != "duplicate").count() == 1
-    assert db.query(Document).filter(Document.status == "duplicate").count() == 1
-    assert db.query(Job).count() == 1
+    assert db.query(Document).filter(Document.user_id == user_id, Document.status != "duplicate").count() == 1
+    assert db.query(Document).filter(Document.user_id == user_id, Document.status == "duplicate").count() == 1
+    assert db.query(Job).join(Document).filter(Document.user_id == user_id).count() == 1
 
 
 def test_renamed_exe_as_pdf_is_unsupported(client, monkeypatch) -> None:
@@ -179,7 +181,8 @@ def test_filename_path_components_are_stripped(client, db: Session, monkeypatch)
 
 def test_concurrent_same_file_upload_creates_one_primary_document(client, db: Session, monkeypatch) -> None:
     patch_upload_dependencies(monkeypatch)
-    _, token = register_and_login(client)
+    email, token = register_and_login(client)
+    user_id = db.query(User.id).filter(User.email == email).scalar()
 
     def do_upload():
         return upload_files(client, token, [("race.pdf", PDF_BYTES, "application/pdf")]).json()
@@ -189,21 +192,25 @@ def test_concurrent_same_file_upload_creates_one_primary_document(client, db: Se
 
     statuses = [result["results"][0]["status"] for result in results]
     assert sorted(statuses) == ["duplicate", "queued"]
-    assert db.query(Document).filter(Document.status != "duplicate").count() == 1
-    assert db.query(Document).filter(Document.status == "duplicate").count() == 1
+    assert db.query(Document).filter(Document.user_id == user_id, Document.status != "duplicate").count() == 1
+    assert db.query(Document).filter(Document.user_id == user_id, Document.status == "duplicate").count() == 1
 
 
 def test_same_bytes_from_different_users_are_not_duplicates(client, db: Session, monkeypatch) -> None:
     patch_upload_dependencies(monkeypatch)
-    _, token_a = register_and_login(client, "user-a@example.test")
-    _, token_b = register_and_login(client, "user-b@example.test")
+    email_a, token_a = register_and_login(client, "user-a@example.test")
+    email_b, token_b = register_and_login(client, "user-b@example.test")
 
     first = upload_files(client, token_a, [("invoice.pdf", PDF_BYTES, "application/pdf")])
     second = upload_files(client, token_b, [("invoice.pdf", PDF_BYTES, "application/pdf")])
 
     assert first.json()["results"][0]["status"] == "queued"
     assert second.json()["results"][0]["status"] == "queued"
-    assert db.query(Document).filter(Document.status != "duplicate").count() == 2
+    user_ids = db.query(User.id).filter(User.email.in_([email_a, email_b])).all()
+    assert db.query(Document).filter(
+        Document.user_id.in_([user_id for (user_id,) in user_ids]),
+        Document.status != "duplicate",
+    ).count() == 2
 
 
 def test_upload_requires_auth(client, monkeypatch) -> None:
