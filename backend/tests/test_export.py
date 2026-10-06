@@ -228,6 +228,25 @@ def test_export_reviewed_value_precedence(client: TestClient, db: Session) -> No
     assert data[0]["fields"]["total"] == "999.00"
 
 
+def test_export_preserves_explicitly_cleared_reviewed_value(client: TestClient, db: Session) -> None:
+    user, token = create_test_user(db)
+    doc = create_test_document(
+        db,
+        user,
+        fields={"gstin": ("27ABCDE1234F1Z5", "")},
+        line_items=[],
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    csv_response = client.get(f"/api/v1/export?format=csv&ids={doc.id}", headers=headers)
+    json_response = client.get(f"/api/v1/export?format=json&ids={doc.id}", headers=headers)
+
+    assert csv_response.status_code == 200
+    assert list(csv.reader(io.StringIO(csv_response.text)))[1][5] == ""
+    assert json_response.status_code == 200
+    assert json_response.json()[0]["fields"]["gstin"] is None
+
+
 def test_export_quotes_commas_and_newlines_in_descriptions(client: TestClient, db: Session) -> None:
     user, token = create_test_user(db)
     complex_desc = 'Heavy Duty "Steel" Rods, Grade-A\nBatch #104'

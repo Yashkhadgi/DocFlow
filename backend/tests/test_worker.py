@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from decimal import Decimal
+from threading import Event, Lock
+import time
 from uuid import uuid4
 
 import pytest
 from celery.exceptions import Retry
 
 from app.auth.security import hash_password
-from app.extraction.types import ExtractionResult, FieldValue
+from app.extraction.types import ExtractionResult, FieldValue, LineItem as ExtractedLineItem
 from app.models import Document, ExtractedField, Job, LineItem, User, ValidationIssue
 from app.workers import tasks as task_module
 from app.workers.celery_app import celery_app
@@ -89,6 +92,32 @@ def test_stub_failure_marker_is_filename_based(monkeypatch) -> None:
     monkeypatch.setattr(task_module.settings, "force_fail_filename_contains", "trigger")
     with pytest.raises(RuntimeError, match="trigger.pdf"):
         stub_extract(PDF_BYTES, "application/pdf", filename="trigger.pdf")
+
+
+def test_stub_generates_distinct_business_keys_for_distinct_files(monkeypatch) -> None:
+    monkeypatch.setattr(task_module.settings, "force_fail_filename_contains", None)
+
+    first = stub_extract(PDF_BYTES + b" first", "application/pdf", filename="first.pdf")
+    second = stub_extract(PDF_BYTES + b" second", "application/pdf", filename="second.pdf")
+
+    assert first.fields["invoice_number"].value != second.fields["invoice_number"].value
+    assert first.fields["invoice_number"].value != "INV-001"
+    assert second.fields["invoice_number"].value != "INV-001"
+
+
+def test_stub_keeps_intentional_business_duplicate_sample_pair(monkeypatch) -> None:
+    monkeypatch.setattr(task_module.settings, "force_fail_filename_contains", None)
+
+    clean = stub_extract(PDF_BYTES + b" clean", "application/pdf", filename="clean_invoice.pdf")
+    resaved = stub_extract(
+        PDF_BYTES + b" resaved",
+        "application/pdf",
+        filename="same_invoice_resaved.pdf",
+    )
+
+    assert clean.fields["vendor_name"].value == resaved.fields["vendor_name"].value
+    assert clean.fields["invoice_number"].value == resaved.fields["invoice_number"].value
+    assert clean.fields["invoice_number"].value == "INV-001"
 
 
 def test_worker_happy_path_needs_review(client, db, monkeypatch) -> None:
@@ -174,6 +203,43 @@ def test_worker_redelivery_is_idempotent(client, db, monkeypatch) -> None:
     assert db.query(ExtractedField).filter(ExtractedField.document_id == document.id).count() == first_fields
     assert db.query(LineItem).filter(LineItem.document_id == document.id).count() == first_items
     assert db.query(Job).filter(Job.document_id == document.id).one().attempts == first_attempts
+
+
+def test_simultaneous_worker_delivery_runs_extraction_once(db, monkeypatch) -> None:
+    _user, document = create_document(db, email="race-worker@example.test")
+    monkeypatch.setattr(task_module, "storage", FakeStorage({document.storage_key: PDF_BYTES}))
+    entered = Event()
+    counter_lock = Lock()
+    calls = 0
+
+    def slow_extract(*_args, **_kwargs):
+        nonlocal calls
+        with counter_lock:
+            calls += 1
+        entered.set()
+        time.sleep(0.35)
+        return extraction_result()
+
+    monkeypatch.setattr(task_module, "_load_extraction_functions", lambda: (
+        slow_extract,
+        lambda result: [],
+        lambda result, issues, threshold=None: False,
+        lambda result, threshold=None: [],
+        lambda result, existing: None,
+    ))
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(task_module.process_document.run, str(document.id))
+        assert entered.wait(timeout=5)
+        second = pool.submit(task_module.process_document.run, str(document.id))
+        first.result(timeout=10)
+        second.result(timeout=10)
+
+    db.expire_all()
+    job = db.query(Job).filter(Job.document_id == document.id).one()
+    assert calls == 1
+    assert job.attempts == 1
+    assert document.status == "approved"
 
 
 def test_worker_extraction_exception_marks_job_failed(client, db, monkeypatch) -> None:
@@ -296,3 +362,87 @@ def test_business_duplicate_candidates_are_user_isolated(client, db, monkeypatch
     run_task(db, monkeypatch, document.id)
 
     assert document.status == "approved"
+
+
+def test_business_duplicate_candidates_use_reviewed_values(db) -> None:
+    _user, document = create_document(db)
+    document.status = "approved"
+    db.add(ExtractedField(
+        document_id=document.id,
+        field_name="vendor_name",
+        value="Incorrect vendor",
+        reviewed_value="Acme Traders",
+        confidence=Decimal("0.95"),
+    ))
+    db.add(ExtractedField(
+        document_id=document.id,
+        field_name="invoice_number",
+        value="INCORRECT-1",
+        reviewed_value="INV-2026-001",
+        confidence=Decimal("0.95"),
+    ))
+    db.commit()
+
+    pending = Document(
+        user_id=document.user_id,
+        filename="resaved.pdf",
+        mime_type="application/pdf",
+        size_bytes=len(PDF_BYTES),
+        file_hash="b" * 64,
+        storage_key=f"users/{document.user_id}/{uuid4()}",
+        status="queued",
+    )
+    db.add(pending)
+    db.commit()
+
+    candidates = task_module._business_duplicate_candidates(db, pending)
+    assert candidates == [{
+        "id": str(document.id),
+        "vendor_name": "Acme Traders",
+        "invoice_number": "INV-2026-001",
+    }]
+
+
+def test_worker_real_extractor_path_persists_b_types(db, monkeypatch) -> None:
+    from app import extraction
+
+    _user, document = create_document(db)
+    real_result = ExtractionResult(
+        fields={
+            "vendor_name": FieldValue(value="Acme Traders", confidence=0.96, bbox={
+                "page": 1, "x": 0.1, "y": 0.1, "w": 0.3, "h": 0.1,
+            }),
+            "invoice_number": FieldValue(value="INV-2026-001", confidence=0.96),
+            "invoice_date": FieldValue(value="2026-10-01", confidence=0.96),
+            "gstin": FieldValue(value="27ABCDE1234F1Z5", confidence=0.62),
+            "subtotal": FieldValue(value="10000.00", confidence=0.96),
+            "tax": FieldValue(value="1800.00", confidence=0.96),
+            "total": FieldValue(value="11500.00", confidence=0.96),
+        },
+        line_items=[ExtractedLineItem(
+            description="Steel rods", quantity="10", rate="1000.00",
+            amount="10000.00", confidence=0.95,
+        )],
+    )
+    monkeypatch.setattr(task_module.settings, "use_stub_extractor", False)
+    monkeypatch.setattr(extraction, "extract", lambda _data, _mime: real_result)
+
+    run_task(db, monkeypatch, document.id)
+
+    assert document.status == "needs_review"
+    field = db.query(ExtractedField).filter(
+        ExtractedField.document_id == document.id,
+        ExtractedField.field_name == "vendor_name",
+    ).one()
+    assert field.value == "Acme Traders"
+    assert field.bbox == {"page": 1, "x": 0.1, "y": 0.1, "w": 0.3, "h": 0.1}
+    gstin = db.query(ExtractedField).filter(
+        ExtractedField.document_id == document.id,
+        ExtractedField.field_name == "gstin",
+    ).one()
+    assert gstin.needs_review is True
+    assert db.query(LineItem).filter(LineItem.document_id == document.id).count() == 1
+    assert db.query(ValidationIssue).filter(
+        ValidationIssue.document_id == document.id,
+        ValidationIssue.rule == "total_mismatch",
+    ).count() == 1
